@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+.venv/
+*.py[cod]
+
+# Конфігурації
+.env
+
+# Фронтенд
+node_modules/
+frontend/dist/
+
+# Системні файли
+.DS_Store
+Thumbs.db
