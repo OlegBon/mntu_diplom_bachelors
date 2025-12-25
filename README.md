@@ -27,30 +27,84 @@
 
 ```
 mntu_diplom/
-├── .venv/ # Віртуальне середовище Python
-├── .gitignore # Файл для ігнорування системного сміття
-├── .env # Налаштування підключення до БД (не потрапляє в Git)
-├── requirements.txt # Залежності Python
+├── .venv/            # Віртуальне середовище Python
+├── .gitignore        # Файл для ігнорування системного сміття
+├── .env              # Налаштування підключення до БД (не потрапляє в Git)
+├── requirements.txt  # Залежності Python
 ├── data/
 │ └── diamonds_dataset.csv
 ├── scripts/
-│ └── seed_db.py # Скрипт наповнення бази
-├── backend/ # FastAPI додаток (Python)
-│ ├── main.py
-│ ├── Dockerfile # Конфігурація для Docker (Render)
-│ └── render.yaml # Опис сервісів для Render (Blueprint)
-├── frontend/ # Фронтенд на Pug/SCSS
-├── src/ # Вихідні коди
-├── dist/ # Скомпільований результат (HTML/CSS/JS)
-└── gulpfile.js # Налаштування збірки
+│ └── seed_db.py       # Скрипт наповнення бази
+├── backend/           # FastAPI додаток (Python)
+│ ├── __init__.py      # Щоб Python вважав цю папку модулем
+│ ├── crud.py          # Операції з БД (Repository pattern)
+│ ├── database.py      # Налаштування SQLAlchemy (Singleton)
+│ ├── main.py          # Точка входу (FastAPI)
+│ ├── models.py        # Опис таблиць бази даних (ORM)
+│ ├── schemas.py       # Валідація даних (Pydantic)
+│ ├── security.py      # Авторизація та JWT
+│ ├── Dockerfile       # Конфігурація для Docker (Render)
+│ └── render.yaml      # Опис сервісів для Render (Blueprint)
+└── frontend/          # Фронтенд на Pug/SCSS
+  ├── src/               # Вихідні коди
+  ├── dist/              # Скомпільований результат (HTML/CSS/JS)
+  └── gulpfile.js        # Налаштування збірки
 ```
 
-## 🚀 Поточний стан реалізації
+## ✅ Поточний стан реалізації
 
-- [x] Розроблено концептуальну та логічну схему БД.
-- [x] Створено скрипти ініціалізації MariaDB (XAMPP).
-- [x] Реалізовано автоматизоване наповнення бази даних (1000 записів).
-- [x] Налаштовано середовище розробки та Git-flow (гілка `local-dev`).
+### 🗄️ База Даних та Дані
+
+- [x] Розроблено схему для трьох баз: **OLTP, Market, Analytics**.
+- [x] Реалізовано скрипти ініціалізації та сідер (**1000 записів**) для MariaDB.
+- [x] Налаштовано **SQLAlchemy ORM** із використанням патерну **Singleton**.
+
+### ⚙️ Backend API (FastAPI)
+
+- [x] Розроблено REST API з використанням **Repository Pattern** (CRUD).
+- [x] Реалізовано валідацію вхідних даних через **Pydantic** (Schemas).
+- [x] Додано логіку створення та пошуку звітів (автогенерація ID).
+
+### 🔐 Безпека та Доступ
+
+- [x] Реалізовано систему автентифікації на базі **JWT (JSON Web Tokens)**.
+- [x] Впроваджено **Role-Based Access Control (RBAC)**: розділення прав Admins vs Experts.
+- [x] Захищено API-ендпоінти та хешування паролів.
+
+### 🔜 У розробці
+
+- [ ] Інтеграція ML-моделей (Regression, Clustering).
+- [ ] Web-інтерфейс (Frontend на Gulp/Pug).
+
+## 🗄️ Налаштування Бази Даних (Local)
+
+Проєкт використовує MariaDB через XAMPP.
+
+1. Запустіть **XAMPP Control Panel**.
+2. Натисніть **Start** навпроти модулів **Apache** та **MySQL**.
+3. Переконайтеся, що у файлі `.env` налаштування співпадають з вашим XAMPP (зазвичай порт 3306, user: root).
+4. Виконайте первинне наповнення бази (перебуваючи в корені проєкту):
+   ```bash
+   python scripts/seed_db.py
+   ```
+
+## 🚀 Запуск Backend (Local)
+
+1. Активуйте віртуальне оточення:
+   source .venv/bin/activate # (або .venv\Scripts\activate для Windows)
+
+2. Встановіть залежності:
+   pip install -r requirements.txt
+
+3. Запустіть сервер:
+   uvicorn backend.main:app --reload
+
+4. Відкрийте документацію API (Swagger UI):
+   http://127.0.0.1:8000/docs
+
+**Тестові дані:**
+
+- Admin: `admin` / `admin_pass`
 
 ## 🛠 Технологічний стек
 
@@ -73,6 +127,15 @@ python -m pip install --upgrade pip
 
 # Встановлюємо залежності
 pip install -r requirements.txt
+
+# Встановлюємо необхідну бібліотеку
+pip install fastapi
+
+# Перевіряємо встановлення
+pip show fastapi
+
+# Фіксуємо залежності
+pip freeze > requirements.txt
 
 # Наповнення бази даних (із кореня проєкту)
 python scripts/seed_db.py
