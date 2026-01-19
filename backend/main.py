@@ -91,10 +91,64 @@ def read_users(
 @app.get("/experts/", response_model=List[schemas.ExpertBase])
 def read_experts(
     db: Session = Depends(get_db),
-    current_user: models.Expert = Depends(get_current_user) # <--- Додали захист
+    current_user: models.Expert = Depends(get_current_user) # Перевірка токена
 ):
     experts = crud.get_active_experts(db)
-    return experts
+    return 
+
+# Ендпоінт "Я" (профіль поточного юзера)
+@app.get("/users/me", response_model=schemas.ExpertBase)
+def read_user_me(current_user: models.Expert = Depends(get_current_user)):
+    return current_user
+
+# Створення юзера (тільки для адміна)
+@app.post("/users/", response_model=schemas.ExpertBase)
+def create_user(
+    user_data: schemas.UserCreate, 
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user)
+):
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Only admins can create users")
+    
+    # Перевірка чи юзер вже існує
+    db_user = crud.get_user_by_username(db, username=user_data.username)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+        
+    return crud.create_user(db=db, user=user_data)
+
+# Оновлення юзера (тільки для адміна)
+@app.put("/users/{expert_id}", response_model=schemas.ExpertBase)
+def update_user(
+    expert_id: int,
+    user_data: schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user)
+):
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Only admins can update users")
+    
+    updated_user = crud.update_user(db, expert_id, user_data)
+    if not updated_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return updated_user
+
+# Видалення юзера (тільки для адміна)
+@app.delete("/users/{expert_id}")
+def delete_user(
+    expert_id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user)
+):
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Only admins can delete users")
+    
+    deleted = crud.delete_user(db, expert_id=expert_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": f"User {expert_id} deleted successfully"}
 
 # Пошук звіту
 @app.get("/diamonds/{report_id}", response_model=schemas.DiamondReportSchema)
@@ -116,3 +170,35 @@ def create_report(
     # diamond_data.price = ml_results.price
     
     return crud.create_diamond_report(db=db, diamond=diamond_data, expert_id=current_user.expert_id)
+
+# Список усіх діамантів (з пагінацією)
+@app.get("/diamonds/", response_model=List[schemas.DiamondReportSchema])
+def read_diamonds(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
+    return crud.get_diamonds(db, skip=skip, limit=limit)
+
+# Оновлення звіту (доступно авторизованим)
+@app.put("/diamonds/{report_id}", response_model=schemas.DiamondReportSchema)
+def update_report(
+    report_id: str, 
+    update_data: schemas.DiamondUpdate, 
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user)
+):
+    return crud.update_diamond_report(db, report_id, update_data)
+
+# Видалення звіту (тільки для адміна)
+@app.delete("/diamonds/{report_id}")
+def delete_report(
+    report_id: str, 
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user)
+):
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Only admins can delete reports")
+    crud.delete_diamond_report(db, report_id)
+    return {"message": "Report deleted"}
+
+# Статистика експертів
+@app.get("/statistics/expert-performance", response_model=List[schemas.ExpertStats])
+def get_stats(db: Session = Depends(get_db)):
+    return crud.get_expert_stats(db)
