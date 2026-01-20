@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import timedelta
 from jose import JWTError, jwt
 
@@ -202,3 +202,13 @@ def delete_report(
 @app.get("/statistics/expert-performance", response_model=List[schemas.ExpertStats])
 def get_stats(db: Session = Depends(get_db)):
     return crud.get_expert_stats(db)
+
+@app.get("/market/mappings", response_model=List[schemas.GradeMappingSchema])
+def read_mappings(category: Optional[str] = None, db: Session = Depends(get_db)):
+    """
+    Публічний ендпоінт для отримання довідників (Grade Mappings).
+    Використовується фронтендом для рендерингу форм.
+    
+    category: (опціонально) фільтр, наприклад 'color', 'cut'.
+    """
+    return crud.get_mappings(db, category)

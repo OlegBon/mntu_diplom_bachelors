@@ -148,3 +148,16 @@ def get_expert_stats(db: Session):
         func.count(models.DiamondReport.report_id).label("total_reports"),
         func.avg(models.DiamondReport.carat_weight).label("avg_carat")
     ).join(models.DiamondReport).group_by(models.Expert.username).all()
+
+def get_mappings(db: Session, category: str = None):
+    """
+    Отримує список мапінгів (довідників) з бази Market.
+    
+    :param category: (Optional) Фільтр по категорії (напр. 'clarity'). 
+                     Якщо None - повертає всі довідники.
+    """
+    query = db.query(models.GradeMapping)
+    if category:
+        query = query.filter(models.GradeMapping.category == category)
+    # Сортуємо по category, а потім по значенню (щоб D йшло перед E)
+    return query.order_by(models.GradeMapping.category, models.GradeMapping.grade_value).all()

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DECIMAL, Date, ForeignKey, Enum, TIMESTAMP, Boolean
+from sqlalchemy import Column, Integer, String, DECIMAL, Date, ForeignKey, Enum, TIMESTAMP, Boolean, UniqueConstraint
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -51,3 +51,36 @@ class DiamondReport(Base):
     is_sold = Column(Boolean, default=False)
     days_on_market = Column(Integer, nullable=True)
     sale_date = Column(Date, nullable=True)
+
+class GradeMapping(Base):
+    __tablename__ = "grade_mappings"
+    
+    # Визначаємо схему і додаємо обмеження:
+    # Комбінація (category + grade_value) має бути унікальною.
+    # Тобто не може бути двох записів про 'color' з value '2'.
+    __table_args__ = (
+        UniqueConstraint('category', 'grade_value', name='uix_category_grade'),
+        {"schema": "diamond_market"}
+    )
+
+    # Класичний Primary Key
+    id = Column(Integer, primary_key=True, index=True)
+    
+    # Інформативні поля
+    category = Column(String(50), nullable=False)    # напр. 'color'
+    grade_value = Column(Integer, nullable=False)    # напр. 2
+    grade_label = Column(String(50), nullable=False) # напр. 'F'
+
+class MarketPriceRef(Base):
+    __tablename__ = "market_price_reference"
+    __table_args__ = {"schema": "diamond_market"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    
+    # Ринковий індекс або базова ціна
+    price_index_value = Column(DECIMAL(10,4), nullable=False) 
+    
+    # Хто і коли оновив
+    updated_by = Column(Integer, nullable=True) # NULL, якщо оновила система
+    updated_at = Column(TIMESTAMP, server_default=func.now())
+    notes = Column(String(255), nullable=True)

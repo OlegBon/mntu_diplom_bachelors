@@ -54,6 +54,11 @@ def seed_data():
     raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_oltp")
     raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_market")
     raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_analytics")
+
+    print(" -> Видалення застарілих таблиць Market (щоб оновити структуру)...")
+    raw_cursor.execute("DROP TABLE IF EXISTS diamond_market.grade_mappings")
+    raw_cursor.execute("DROP TABLE IF EXISTS diamond_market.market_price_reference")
+
     raw_conn.commit()
     raw_cursor.close()
     raw_conn.close()
@@ -62,6 +67,60 @@ def seed_data():
     print(" -> Створення таблиць згідно з models.py...")
     # Ця магічна команда дивиться в models.py і створює таблиці, якщо їх немає
     models.Base.metadata.create_all(bind=database.engine)
+
+    # Наповнення довідників (Market)
+    conn_market = get_connection("diamond_market")
+    cursor_market = conn_market.cursor()
+    
+    print(" -> Наповнення довідників (Mappings)...")
+    
+    # Очистка старих мапінгів
+    cursor_market.execute("TRUNCATE TABLE grade_mappings")
+    
+    mappings = []
+    
+    # Color: 0=D, 1=E, 2=F ...
+    colors = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N-Z']
+    for i, label in enumerate(colors):
+        mappings.append(('color', i, label))
+        
+    # Clarity: 0=FL, 1=IF ...
+    clarities = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'I1', 'I2', 'I3']
+    for i, label in enumerate(clarities):
+        mappings.append(('clarity', i, label))
+        
+    # Cut / Polish / Symmetry: 0=Excellent ...
+    cuts = ['Excellent', 'Very Good', 'Good', 'Fair', 'Poor']
+    for i, label in enumerate(cuts):
+        mappings.append(('cut', i, label))
+        mappings.append(('polish', i, label))
+        mappings.append(('symmetry', i, label))
+        mappings.append(('proportions', i, label)) # Додаємо і це
+
+    # Fluorescence
+    fluorescences = ['None', 'Faint', 'Medium', 'Strong', 'Very Strong']
+    for i, label in enumerate(fluorescences):
+        mappings.append(('fluorescence', i, label))
+        
+    # Origin
+    origins = ['Natural', 'Lab-Grown']
+    for i, label in enumerate(origins):
+        mappings.append(('origin', i, label))
+
+    cursor_market.executemany(
+        "INSERT INTO grade_mappings (category, grade_value, grade_label) VALUES (%s, %s, %s)",
+        mappings
+    )
+    
+    # Додаємо початкову ринкову ціну (Базовий індекс)
+    cursor_market.execute("TRUNCATE TABLE market_price_reference")
+    cursor_market.execute(
+        "INSERT INTO market_price_reference (price_index_value, updated_by, notes) VALUES (6000.00, 0, 'Initial Base Price')"
+    )
+    
+    conn_market.commit()
+    cursor_market.close()
+    conn_market.close()
 
     # Наповнення даними
     conn = get_connection("diamond_oltp") # Підключаємося вже до конкретної бази

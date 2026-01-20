@@ -74,3 +74,15 @@ class DiamondReportSchema(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class GradeMappingSchema(BaseModel):
+    """
+    Схема для передачі довідкових даних (метаданих) на клієнт.
+    Використовується для заповнення Select-елементів у формах.
+    """
+    category: str      # Назва категорії (напр. 'color', 'cut')
+    grade_value: int   # Числове значення в БД (напр. 2)
+    grade_label: str   # Текстова назва для людини (напр. 'F')
+
+    class Config:
+        from_attributes = True
