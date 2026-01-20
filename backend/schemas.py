@@ -24,18 +24,26 @@ class ExpertBase(BaseModel):
 
 # Схема для створення нового звіту (те, що вводить експерт)
 class DiamondCreate(BaseModel):
-    # Фізичні характеристики (обов'язкові)
+    # Фізичні виміри (обов'язкові)
     carat_weight: float
+    table_percent: float
+    depth_percent: float
+    crown_angle: float
+    pavilion_angle: float
+    
+    # Експертні оцінки (те, що бачить око)
     color_grade: int
     clarity_grade: int
-    cut_grade: int
     polish_grade: int
-    proportions_grade: int
     symmetry_grade: int
     fluorescence_grade: int
     stone_origin: int
+
+    # Поля, які ми або порахуємо, або візьмемо введені (необов'язкові)
+    cut_grade: Optional[int] = None
+    proportions_grade: Optional[int] = None
     
-    # Можна дозволити вводити ціну вручну, або залишити 0 (бо ML поки немає, виправимо пізніше)
+    # Ціна (якщо 0 - викличемо ML)
     price: Optional[float] = 0.0
 
 # Схема для оновлення звіту (всі поля необов'язкові)

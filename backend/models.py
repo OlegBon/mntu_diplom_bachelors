@@ -19,27 +19,35 @@ class DiamondReport(Base):
     report_id = Column(String(20), primary_key=True, index=True)
     report_date = Column(Date, nullable=False)
     
-    # Фізичні характеристики
+    # Фізичні виміри
+    table_percent = Column(DECIMAL(5,2), nullable=True)
+    depth_percent = Column(DECIMAL(5,2), nullable=True)
+    crown_angle = Column(DECIMAL(5,2), nullable=True)
+    pavilion_angle = Column(DECIMAL(5,2), nullable=True)
+
+    # Основні характеристики
     carat_weight = Column(DECIMAL(10,2))
     color_grade = Column(Integer)
     clarity_grade = Column(Integer)
+    
+    # Оцінки (Grades)
     cut_grade = Column(Integer)
     polish_grade = Column(Integer)
     proportions_grade = Column(Integer)
     symmetry_grade = Column(Integer)
+    
     fluorescence_grade = Column(Integer)
     stone_origin = Column(Integer)
     
-    # Мета-дані
+    # Мета-дані та продажі
     expert_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"))
     evaluation_time_min = Column(Integer)
     report_notes_length = Column(Integer)
     report_sentiment = Column(Integer)
     
-    # Ринкові показники
-    price = Column(DECIMAL(15,2))
-    is_investment_grade = Column(Boolean)
-    is_report_rejected = Column(Boolean)
+    price = Column(DECIMAL(12,2))
+    is_investment_grade = Column(Boolean, default=False)
+    is_report_rejected = Column(Boolean, default=False)
     is_sold = Column(Boolean, default=False)
-    days_on_market = Column(Integer)
+    days_on_market = Column(Integer, nullable=True)
     sale_date = Column(Date, nullable=True)

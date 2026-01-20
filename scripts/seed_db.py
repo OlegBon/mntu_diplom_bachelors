@@ -1,26 +1,74 @@
 import mysql.connector
 import pandas as pd
 import os
+import random
+import sys
 from dotenv import load_dotenv
+
+# Додаємо кореневу папку проєкту в sys.path, щоб бачити папку backend
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend import models, database  # Імпортуємо наші моделі та налаштування БД
 
 load_dotenv()
 
-# Підключення до MariaDB
+# Підключення до MariaDB (для "сирих" запитів)
 def get_connection(db_name=None):
     return mysql.connector.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
+        host=os.getenv("DB_HOST", "localhost"),
+        user=os.getenv("DB_USER", "root"),
+        password=os.getenv("DB_PASSWORD", ""),
         database=db_name
     )
 
+def generate_measurements(proportions_grade):
+    """
+    Reverse Engineering: Генерує правдоподібні розміри на основі оцінки.
+    """
+    if proportions_grade == 0: # EXCELLENT
+        table = round(random.uniform(56.0, 61.0), 1)
+        depth = round(random.uniform(59.0, 62.5), 1)
+        crown = round(random.uniform(34.0, 35.0), 1)
+        pavilion = round(random.uniform(40.6, 40.9), 1)
+    
+    elif proportions_grade == 1: # VERY GOOD
+        table = round(random.uniform(53.0, 63.0), 1)
+        depth = round(random.uniform(58.0, 63.5), 1)
+        crown = round(random.uniform(32.5, 36.0), 1)
+        pavilion = round(random.uniform(40.4, 41.2), 1)
+        
+    else: # GOOD / FAIR
+        table = round(random.uniform(64.0, 68.0), 1)
+        depth = round(random.uniform(64.0, 66.0), 1)
+        crown = round(random.uniform(36.0, 40.0), 1)
+        pavilion = round(random.uniform(42.0, 44.0), 1)
+
+    return table, depth, crown, pavilion
+
 def seed_data():
-    conn = get_connection()
+    # Створення баз даних (через raw connection, бо SQLAlchemy не вміє CREATE DATABASE)
+    raw_conn = get_connection()
+    raw_cursor = raw_conn.cursor()
+    
+    print(" -> Перевірка/Створення баз даних...")
+    raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_oltp")
+    raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_market")
+    raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_analytics")
+    raw_conn.commit()
+    raw_cursor.close()
+    raw_conn.close()
+
+    # Створення таблиць (через SQLAlchemy models) 
+    print(" -> Створення таблиць згідно з models.py...")
+    # Ця магічна команда дивиться в models.py і створює таблиці, якщо їх немає
+    models.Base.metadata.create_all(bind=database.engine)
+
+    # Наповнення даними
+    conn = get_connection("diamond_oltp") # Підключаємося вже до конкретної бази
     cursor = conn.cursor()
 
-    print(" -> Створення облікових записів...")
-    # 1. Заповнення експертів (Admin + 5 Гемологів)
-    # password_hash тут для прикладу, у реальному бекенді будемо хешувати
+    # Експерти
+    print(" -> Додавання експертів...")
     experts_data = [
         (0, 'admin', 'admin_pass', 'admin'),
         (1, 'expert_1', 'pass_1', 'gemologist'),
@@ -29,51 +77,61 @@ def seed_data():
         (4, 'expert_4', 'pass_4', 'gemologist'),
         (5, 'expert_5', 'pass_5', 'gemologist')
     ]
-    
-    cursor.execute("USE diamond_oltp")
     cursor.executemany(
-        "INSERT IGNORE INTO experts (expert_id, username, password_hash, role) VALUES (%s, %s, %s, %s)",
+        "INSERT IGNORE INTO experts (expert_id, username, password_hash, role) VALUES (%s, %s, %s, %s)", 
         experts_data
     )
+    conn.commit()
 
-    print(" -> Завантаження датасету...")
-    # 2. Завантаження основного датасету
-    # df = pd.read_csv('../data/diamonds_dataset.csv')
-
-    # Визначаємо шлях до поточної папки скрипта
+    # Звіти (Діаманти)
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    # Формуємо шлях до файлу відносно кореня проєкту
     DATA_PATH = os.path.join(BASE_DIR, '..', 'data', 'diamonds_dataset.csv')
 
-    print(f" -> Читання файлу: {DATA_PATH}")
-    df = pd.read_csv(DATA_PATH)
+    print(f" -> Читання CSV та генерація вимірів: {DATA_PATH}")
     
-    # Заміна NaN у sale_date на None для SQL
+    try:
+        df = pd.read_csv(DATA_PATH)
+    except FileNotFoundError:
+        print(f"ПОМИЛКА: Не знайдено файл {DATA_PATH}")
+        return
+
+    # Очистка для SQL
     df['sale_date'] = df['sale_date'].where(pd.notnull(df['sale_date']), None)
 
+    count = 0
+    print(" -> Інсерт даних (це може зайняти кілька секунд)...")
+    
     for _, row in df.iterrows():
+        # Генерація фейкових вимірів
+        p_grade = row['proportions_grade']
+        table, depth, crown, pav = generate_measurements(p_grade)
+        
         sql = """INSERT IGNORE INTO diamond_reports 
-                 (report_id, report_date, carat_weight, color_grade, clarity_grade, cut_grade, 
+                 (report_id, report_date, 
+                  table_percent, depth_percent, crown_angle, pavilion_angle,
+                  carat_weight, color_grade, clarity_grade, cut_grade, 
                   polish_grade, proportions_grade, symmetry_grade, fluorescence_grade, stone_origin, 
                   expert_id, evaluation_time_min, report_notes_length, report_sentiment, price, 
                   is_investment_grade, is_report_rejected, is_sold, days_on_market, sale_date) 
-                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
         
-        cursor.execute(sql, tuple(row))
-
-    print(" -> Заповнення мапінгів...")
-    # 3. Заповнення довідників у diamond_market (Приклад для Origin)
-    cursor.execute("USE diamond_market")
-    mappings = [
-        ('origin', 1, 'Natural'), ('origin', 2, 'Treated'), 
-        ('origin', 3, 'Synthetic'), ('origin', 0, 'Simulant')
-    ]
-    cursor.executemany("INSERT IGNORE INTO grade_mappings (category, grade_value, grade_label) VALUES (%s, %s, %s)", mappings)
+        values = (
+            row['report_id'], row['report_date'],
+            table, depth, crown, pav,
+            row['carat_weight'], row['color_grade'], row['clarity_grade'], row['cut_grade'],
+            row['polish_grade'], row['proportions_grade'], row['symmetry_grade'], 
+            row['fluorescence_grade'], row['stone_origin'], row['expert_id'], 
+            row['evaluation_time_min'], row['report_notes_length'], row['report_sentiment'], 
+            row['price'], row['is_investment_grade'], row['is_report_rejected'], 
+            row['is_sold'], row['days_on_market'], row['sale_date']
+        )
+        cursor.execute(sql, values)
+        count += 1
 
     conn.commit()
+    print(f" -> ✅ Успішно! Завантажено {count} діамантів.")
     cursor.close()
     conn.close()
-    print("✅ Бази успішно наповнені!")
 
 if __name__ == "__main__":
     seed_data()
