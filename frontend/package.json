@@ -1,0 +1,24 @@
+{
+  "name": "diamond-id-frontend",
+  "version": "1.0.0",
+  "description": "Frontend interface for Diamond Identification System (MNTU Diploma)",
+  "author": "Oleh Bondarenko",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "gulp",
+    "build": "gulp build",
+    "clean": "gulp clean"
+  },
+  "devDependencies": {
+    "browser-sync": "^3.0.4",
+    "del": "^6.1.1",
+    "gulp": "^5.0.1",
+    "gulp-autoprefixer": "^8.0.0",
+    "gulp-notify": "^5.0.0",
+    "gulp-plumber": "^1.2.1",
+    "gulp-pug": "^5.0.0",
+    "gulp-sass": "^6.0.1",
+    "sass": "^1.97.2"
+  }
+}

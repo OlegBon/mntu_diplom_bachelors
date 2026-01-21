@@ -1,0 +1,33 @@
+doctype html
+html(lang="uk")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        title Diamond ID System
+        link(rel="stylesheet", href="css/main.css")
+        // Можна підключити Google Fonts тут, якщо захочемо
+    
+    body
+        // Header (Шапка) - спільна для всіх
+        header.main-header
+            .container
+                .header-content
+                    .logo 💎 Diamond ID
+                    nav.main-nav
+                        // Цей блок ми потім будемо ховати/показувати через JS
+                        ul#nav-links
+                            li: a(href="/dashboard.html") Список звітів
+                            li: a(href="/create.html") Новий звіт
+                            li: button#logout-btn.btn.btn-sm Вийти
+        
+        // Main Content (Сюди вставлятимуться сторінки)
+        main.page-content
+            .container
+                block content
+
+        // Footer
+        footer.main-footer
+            .container
+                p &copy; 2026 Diamond ID System. MNTU Diploma Project.
+
+        script(src="js/main.js" type="module")

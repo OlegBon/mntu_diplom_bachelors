@@ -1,0 +1,51 @@
+// Підключаємо вбудований модуль Sass для роботи з кольорами
+@use "sass:color";
+
+// Підключаємо наші змінні
+// "as *" означає, що ми хочемо використовувати змінні як $primary-color,
+// а не variables.$primary-color (щоб менше писати)
+@use "variables" as *;
+
+// Reset & Base
+* {
+  box_sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: $font-family-base;
+  background-color: $light-bg;
+  color: $dark-text;
+  line-height: 1.6;
+}
+
+// Container
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 $spacer;
+}
+
+// Buttons
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: background 0.3s;
+
+  &.btn-primary {
+    background-color: $primary-color;
+    color: $white;
+
+    // Використовуємо color.adjust замість darken
+    // $lightness: -10% означає "зробити на 10% темнішим"
+    &:hover {
+      background-color: color.adjust($primary-color, $lightness: -10%);
+    }
+  }
+}
