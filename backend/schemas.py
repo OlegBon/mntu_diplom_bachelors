@@ -6,6 +6,9 @@ from datetime import date, datetime
 class UserCreate(BaseModel):
     username: str
     password: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    middle_name: Optional[str] = None
     role: Optional[str] = "gemologist"
 
 # Схема для оновлення юзера (пароль необов'язковий)
@@ -15,8 +18,11 @@ class UserUpdate(BaseModel):
 
 # Схема для експерта (дані, що ми віддаємо на фронт)
 class ExpertBase(BaseModel):
-    expert_id: int
+expert_id: int
     username: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+    middle_name: Optional[str]
     role: str
 
     class Config:

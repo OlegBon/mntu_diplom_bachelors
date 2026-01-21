@@ -55,9 +55,14 @@ def seed_data():
     raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_market")
     raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_analytics")
 
-    print(" -> Видалення застарілих таблиць Market (щоб оновити структуру)...")
+    print(" -> Видалення застарілих таблиць ...")
     raw_cursor.execute("DROP TABLE IF EXISTS diamond_market.grade_mappings")
     raw_cursor.execute("DROP TABLE IF EXISTS diamond_market.market_price_reference")
+
+    raw_cursor.execute("SET FOREIGN_KEY_CHECKS = 0") # Вимикаємо перевірку ключів
+    raw_cursor.execute("DROP TABLE IF EXISTS diamond_oltp.experts") 
+    raw_cursor.execute("DROP TABLE IF EXISTS diamond_oltp.diamond_reports")
+    raw_cursor.execute("SET FOREIGN_KEY_CHECKS = 1") # Вмикаємо перевірку ключів назад
 
     raw_conn.commit()
     raw_cursor.close()
@@ -128,16 +133,19 @@ def seed_data():
 
     # Експерти
     print(" -> Додавання експертів...")
+    # ID, username, password, role, First, Last, Middle
     experts_data = [
-        (0, 'admin', 'admin_pass', 'admin'),
-        (1, 'expert_1', 'pass_1', 'gemologist'),
-        (2, 'expert_2', 'pass_2', 'gemologist'),
-        (3, 'expert_3', 'pass_3', 'gemologist'),
-        (4, 'expert_4', 'pass_4', 'gemologist'),
-        (5, 'expert_5', 'pass_5', 'gemologist')
+        (6, 'admin', 'admin_pass', 'admin', 'System', 'Admin', 'Zero'),
+        (1, 'expert_1', 'pass_1', 'gemologist', 'Expert', 'One', 'First'),
+        (2, 'expert_2', 'pass_2', 'gemologist', 'Expert', 'Two', 'Second'),
+        (3, 'expert_3', 'pass_3', 'gemologist', 'Expert', 'Three', 'Third'),
+        (4, 'expert_4', 'pass_4', 'gemologist', 'Expert', 'Four', 'Fourth'),
+        (5, 'expert_5', 'pass_5', 'gemologist', 'Expert', 'Five', 'Fifth'),
     ]
     cursor.executemany(
-        "INSERT IGNORE INTO experts (expert_id, username, password_hash, role) VALUES (%s, %s, %s, %s)", 
+        """INSERT IGNORE INTO experts 
+           (expert_id, username, password_hash, role, first_name, last_name, middle_name) 
+           VALUES (%s, %s, %s, %s, %s, %s, %s)""",
         experts_data
     )
     conn.commit()

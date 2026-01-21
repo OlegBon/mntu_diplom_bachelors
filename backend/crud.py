@@ -21,6 +21,9 @@ def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = get_password_hash(user.password)
     db_user = models.Expert(
         username=user.username,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        middle_name=user.middle_name,
         password_hash=hashed_password,
         role=user.role
     )
