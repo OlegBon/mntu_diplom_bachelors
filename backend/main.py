@@ -225,3 +225,24 @@ def read_mappings(category: Optional[str] = None, db: Session = Depends(get_db))
     category: (опціонально) фільтр, наприклад 'color', 'cut'.
     """
     return crud.get_mappings(db, category)
+
+# Отримати поточну ринкову ціну
+@app.get("/market/price", response_model=schemas.MarketPriceResponse)
+def read_current_price(db: Session = Depends(get_db)):
+    price = crud.get_latest_market_price(db)
+    if not price:
+        raise HTTPException(status_code=404, detail="Market price not set")
+    return price
+
+# Встановити нову ціну (Тільки Адмін)
+@app.post("/market/price", response_model=schemas.MarketPriceResponse)
+def update_market_price(
+    price_data: schemas.MarketPriceCreate,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user)
+):
+    # Перевірка прав
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Only admins can update market prices")
+    
+    return crud.create_market_price(db, price_data, admin_id=current_user.expert_id)

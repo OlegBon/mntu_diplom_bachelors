@@ -161,3 +161,19 @@ def get_mappings(db: Session, category: str = None):
         query = query.filter(models.GradeMapping.category == category)
     # Сортуємо по category, а потім по значенню (щоб D йшло перед E)
     return query.order_by(models.GradeMapping.category, models.GradeMapping.grade_value).all()
+
+# Отримати найсвіжішу ринкову ціну
+def get_latest_market_price(db: Session):
+    return db.query(models.MarketPriceRef).order_by(models.MarketPriceRef.id.desc()).first()
+
+# Створити новий запис про ціну (Історія змін)
+def create_market_price(db: Session, price_data: schemas.MarketPriceCreate, admin_id: int):
+    db_price = models.MarketPriceRef(
+        price_index_value=price_data.price_index_value,
+        updated_by=admin_id,
+        notes=price_data.notes
+    )
+    db.add(db_price)
+    db.commit()
+    db.refresh(db_price)
+    return db_price

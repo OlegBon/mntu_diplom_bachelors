@@ -86,3 +86,18 @@ class GradeMappingSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class MarketPriceCreate(BaseModel):
+    """Схема для встановлення нової ринкової ціни (Admin input)"""
+    price_index_value: float
+    notes: Optional[str] = None
+
+class MarketPriceResponse(BaseModel):
+    """Схема для відображення поточної ціни"""
+    id: int
+    price_index_value: float
+    updated_at: datetime
+    notes: Optional[str]
+
+    class Config:
+        from_attributes = True
