@@ -18,7 +18,7 @@ class UserUpdate(BaseModel):
 
 # Схема для експерта (дані, що ми віддаємо на фронт)
 class ExpertBase(BaseModel):
-expert_id: int
+    expert_id: int
     username: str
     first_name: Optional[str]
     last_name: Optional[str]
