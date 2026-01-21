@@ -1,15 +1,37 @@
 # Python
 __pycache__/
-.venv/
 *.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
 
-# Конфігурації
+# Logs & Databases
+*.log
+*.sqlite
+*.sqlite3
+
+# Configuration & Secrets
 .env
+.env.*
 
-# Фронтенд
+# Frontend
 node_modules/
 frontend/dist/
+.sass-cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Системні файли
+#  IDE & Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System
 .DS_Store
 Thumbs.db
+ehthumbs.db
