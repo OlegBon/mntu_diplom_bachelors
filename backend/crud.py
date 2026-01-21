@@ -69,8 +69,23 @@ def get_diamond_report(db: Session, report_id: str):
 # Функція для створення нового звіту
 def create_diamond_report(db: Session, diamond: schemas.DiamondCreate, expert_id: int):
     # Генерація ID
-    count = db.query(models.DiamondReport).count()
-    new_report_id = f"DR-{count + 1:05d}"
+    # Знаходимо останній звіт за номером (сортуємо Z -> A)
+    last_report = db.query(models.DiamondReport).order_by(models.DiamondReport.report_id.desc()).first()
+    
+    if last_report:
+        try:
+            # Беремо "DR-00005", розбиваємо по "-", беремо другу частину "00005" і робимо int
+            last_id_str = last_report.report_id
+            last_number = int(last_id_str.split('-')[1])
+            new_id_number = last_number + 1
+        except (IndexError, ValueError):
+            # Якщо раптом в базі ID нестандартного формату
+            new_id_number = db.query(models.DiamondReport).count() + 1
+    else:
+        # Якщо це найперший звіт у порожній базі
+        new_id_number = 1
+    
+    new_report_id = f"DR-{new_id_number:05d}"
 
     # Розрахунок proportions grade (якщо не задано вручну)
     calc_proportions = diamond.proportions_grade
