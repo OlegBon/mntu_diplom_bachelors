@@ -1,0 +1,22 @@
+extends ../layout/main
+
+block content
+    .login-container
+        .login-card
+            h2 Вхід у систему
+            p.text-muted Будь ласка, авторизуйтесь
+            
+            // Форма
+            form#login-form
+                .form-group
+                    label(for="username") Логін
+                    input#username(type="text" name="username" required placeholder="admin")
+                
+                .form-group
+                    label(for="password") Пароль
+                    input#password(type="password" name="password" required placeholder="******")
+                
+                // Місце для помилки
+                p#error-msg(style="color: red; display: none;")
+                
+                button.btn.btn-primary(type="submit") Увійти

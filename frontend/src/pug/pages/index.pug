@@ -1,6 +1,73 @@
 extends ../layout/main
 
 block content
-    h1 Ласкаво просимо!
-    p Система готова до роботи.
-    button.btn.btn-primary(type="button") Тестова кнопка
+    //- Hero Section
+    section.hero-section
+        .hero-content
+            .hero-badge 💎 Diamond ID System
+            h1.hero-title
+                | Інтелектуальна система
+                br
+                | ідентифікації та оцінки діамантів
+            p.hero-subtitle
+                | Миттєвий аналіз фізичних характеристик та ринкової вартості
+                br
+                | на основі алгоритмів машинного навчання.
+            
+            form#public-search-form.hero-search
+                input#search-input(type="text" placeholder="Паспорт, напр DR-00321" required)
+                button.btn.btn-primary(type="submit")
+                    span 🔍
+                    | Пошук
+
+    //- Features Section
+    section.features-section
+        h2.section-title Чому Diamond ID?
+        .features-grid
+            .feature-card
+                .feature-icon 🧠
+                h3 AI-Аналітика
+                p Використання нейромереж для точного визначення характеристик та класифікації каменів.
+            .feature-icon-card
+                .feature-icon ⚡
+                h3 Миттєва Оцінка
+                p Автоматичний розрахунок Cut Grade за стандартами IDC та актуальною ринковою ціною.
+            .feature-card
+                .feature-icon 📄
+                h3 Цифровий Паспорт
+                p Кожен звіт захищений унікальним ID та QR-кодом для швидкої перевірки автентичності.
+
+    //- Recent Diamonds Section
+    section.recent-section
+        .section-header
+            h2 Останні оцінені камені
+            p Публічний реєстр сертифікованих діамантів
+
+        .diamonds-grid
+            //- Генеруємо 4 приклади карток
+            each val, index in [1, 2, 3, 4]
+                //- Імітуємо різні дані для різноманіття
+                - var shapes = ['Round Brilliant', 'Princess', 'Oval', 'Emerald']
+                - var carats = ['1.05', '0.90', '2.10', '1.50']
+                - var colors = ['D', 'E', 'G', 'F']
+                - var clarities = ['VVS1', 'VS1', 'SI1', 'IF']
+                
+                .diamond-card
+                    .diamond-img 💎
+                    .diamond-id DR-2026-00#{val}
+                    h3= shapes[index]
+                    
+                    .specs-list
+                        .spec-item
+                            span.label Carat
+                            span.value= carats[index]
+                        .spec-item
+                            span.label Color
+                            span.value= colors[index]
+                        .spec-item
+                            span.label Clarity
+                            span.value= clarities[index]
+                    
+                    //- Кнопка веде на сторінку перегляду
+                    a.btn.btn-sm.btn-outline(href=`/view-report.html?id=DR-2026-00${val}`) 
+                        | Переглянути паспорт

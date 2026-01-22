@@ -1,51 +1,692 @@
-// Підключаємо вбудований модуль Sass для роботи з кольорами
-@use "sass:color";
+@import "variables";
 
-// Підключаємо наші змінні
-// "as *" означає, що ми хочемо використовувати змінні як $primary-color,
-// а не variables.$primary-color (щоб менше писати)
-@use "variables" as *;
-
-// Reset & Base
+// --- Reset & Base ---
 * {
-  box_sizing: border-box;
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
 body {
-  font-family: $font-family-base;
-  background-color: $light-bg;
-  color: $dark-text;
-  line-height: 1.6;
+  font-family: $font-main;
+  background-color: $bg-color;
+  color: $text-color;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-// Container
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+ul {
+  list-style: none;
+}
+
+// --- Layout Utilities ---
 .container {
-  max-width: 1200px;
+  width: 100%;
+  max-width: $container-width;
   margin: 0 auto;
-  padding: 0 $spacer;
+  padding: 0 1rem;
 }
 
-// Buttons
+.page-content {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+// --- Buttons ---
 .btn {
   display: inline-block;
   padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-weight: 500;
   cursor: pointer;
-  text-decoration: none;
-  font-size: 1rem;
-  transition: background 0.3s;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  font-size: 0.9rem;
 
   &.btn-primary {
     background-color: $primary-color;
     color: $white;
-
-    // Використовуємо color.adjust замість darken
-    // $lightness: -10% означає "зробити на 10% темнішим"
     &:hover {
-      background-color: color.adjust($primary-color, $lightness: -10%);
+      background-color: $primary-hover;
+    }
+  }
+
+  &.btn-outline {
+    border-color: $primary-color;
+    color: $primary-color;
+    background: transparent;
+    &:hover {
+      background-color: $primary-color;
+      color: $white;
+    }
+  }
+
+  &.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+}
+
+// --- Header ---
+.main-header {
+  background-color: $white;
+  border-bottom: 1px solid $border-color;
+  padding: 0.8rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: $shadow-sm;
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  // Група правих елементів (User + Burger)
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem; // Відступ між юзером і бургером
+  }
+
+  // Логотип
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: $text-color;
+    z-index: 101;
+
+    .logo-icon {
+      font-size: 1.5rem;
+    }
+
+    // На мобільному текст ховаємо
+    .logo-text {
+      display: none;
+      @media (min-width: 768px) {
+        display: block;
+      }
+    }
+  }
+
+  // Burger Button
+  .burger-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.2rem;
+    z-index: 101;
+
+    span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background-color: $text-color;
+      transition: all 0.3s;
+    }
+
+    &.is-active {
+      span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+      }
+      span:nth-child(2) {
+        opacity: 0;
+      }
+      span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+      }
+    }
+
+    @media (min-width: 768px) {
+      display: none;
+    }
+  }
+
+  // Navigation
+  .main-nav {
+    // Mobile styles
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: $white;
+    border-bottom: 1px solid $border-color;
+    padding: 1rem 0;
+    box-shadow: $shadow-md;
+    display: none;
+
+    &.is-active {
+      display: block;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    ul {
+      display: flex;
+      flex-direction: column; // Вертикально на мобільному
+      align-items: center;
+      gap: 1.5rem;
+
+      li a {
+        display: block;
+        padding: 0.5rem;
+        font-size: 1.1rem;
+        color: $secondary-color;
+        font-weight: 500;
+        &:hover {
+          color: $primary-color;
+        }
+      }
+    }
+
+    // Desktop Styles
+    @media (min-width: 768px) {
+      position: static;
+      width: auto;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      display: block !important;
+      background: transparent;
+
+      ul {
+        flex-direction: row; // В рядок на десктопі
+        gap: 2rem;
+        li a {
+          font-size: 1rem;
+          padding: 0;
+        }
+      }
+    }
+  }
+
+  // --- Auth Block & Dropdown ---
+  .header-auth {
+    position: relative; // Для позиціонування випадаючого списку
+
+    // Стиль для залогіненого (Trigger)
+    .user-trigger {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      transition: background 0.2s;
+      user-select: none; // Щоб текст не виділявся при кліку
+
+      &:hover {
+        background-color: #f1f5f9; // Світла підсвітка при наведенні
+      }
+
+      .user-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        &.text-admin {
+          color: #dc2626;
+        }
+        &.text-expert {
+          color: $primary-color;
+        }
+      }
+
+      .arrow-icon {
+        font-size: 0.7rem;
+        color: $secondary-color;
+        transition: transform 0.2s;
+      }
+
+      // Коли меню відкрите - стрілочка повертається
+      &.is-active .arrow-icon {
+        transform: rotate(180deg);
+      }
+    }
+
+    // Випадаюче меню
+    .user-dropdown-menu {
+      position: absolute;
+      top: 100%; // Одразу під блоком
+      right: 0; // Рівняємо по правому краю
+      margin-top: 0.5rem;
+      background: $white;
+      border: 1px solid $border-color;
+      border-radius: 8px;
+      box-shadow: $shadow-md;
+      width: 180px;
+
+      // Ховаємо за замовчуванням
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 200;
+
+      &.is-visible {
+        display: flex;
+        animation: fadeIn 0.2s ease-out;
+      }
+
+      a,
+      button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 0.8rem 1rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: $text-color;
+        text-decoration: none;
+        transition: background 0.2s;
+        font-family: $font-main; // Спадкування шрифту
+
+        &:hover {
+          background-color: #f8fafc;
+          color: $primary-color;
+        }
+      }
+
+      // Роздільник перед "Виходом"
+      .divider {
+        height: 1px;
+        background-color: $border-color;
+        margin: 0;
+      }
+
+      .logout-btn {
+        color: #dc2626; // Червоний текст для виходу
+        &:hover {
+          background-color: #fef2f2;
+          color: #b91c1c;
+        }
+      }
+    }
+  }
+
+  // Анімація появи
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+// --- Home Page ---
+// --- Hero Section ---
+.hero-section {
+  text-align: center;
+  padding: 4rem 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  border-radius: 12px;
+  margin-bottom: 3rem;
+
+  .hero-badge {
+    display: inline-block;
+    background: #e0f2fe;
+    color: $primary-color;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+    color: $text-color;
+
+    @media (min-width: 768px) {
+      font-size: 3rem;
+    }
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
+    color: $secondary-color;
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+  }
+
+  // --- Hero Search ---
+  .hero-search {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0.5rem;
+    background: $white;
+    padding: 0.5rem;
+    border-radius: 8px;
+    box-shadow: $shadow-md;
+    border: 1px solid $border-color;
+
+    // Мобільний вигляд (Стовпчик)
+    @media (max-width: 600px) {
+      flex-direction: column;
+
+      input {
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+      }
+
+      button {
+        width: 100%;
+        justify-content: center;
+        padding: 0.8rem;
+      }
+    }
+
+    input {
+      flex: 1;
+      border: none;
+      padding: 0.8rem;
+      font-size: 1rem;
+      outline: none;
+      font-family: $font-main;
+      min-width: 0;
+    }
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+  }
+}
+
+// --- Features Section ---
+.features-section {
+  margin-bottom: 4rem;
+
+  .section-title {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: $text-color;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: 1fr; // Мобільний
+    gap: 2rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(3, 1fr); // Десктоп
+    }
+  }
+
+  .feature-card,
+  .feature-icon-card {
+    background: $white;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    text-align: center;
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: $shadow-md;
+      border-color: rgba($primary-color, 0.3);
+    }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: $text-color;
+    }
+
+    p {
+      color: $secondary-color;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+  }
+}
+
+// --- Recent Diamonds Section ---
+.recent-section {
+  padding-bottom: 4rem;
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 2rem;
+
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: $text-color;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      color: $secondary-color;
+    }
+  }
+
+  .diamonds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .diamond-card {
+    background: $white;
+    border: 1px solid $border-color;
+    border-radius: 12px;
+    overflow: hidden;
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
+    text-align: center;
+    padding: 1.5rem;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: $shadow-md;
+      border-color: $primary-color;
+    }
+
+    .diamond-img {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1rem;
+      background: #f0f9ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+
+    .diamond-id {
+      font-size: 0.85rem;
+      color: $secondary-color;
+      margin-bottom: 0.5rem;
+      font-family: monospace;
+      background: #f1f5f9;
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: $text-color;
+    }
+
+    .specs-list {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+
+      .spec-item {
+        display: flex;
+        flex-direction: column;
+
+        .label {
+          font-size: 0.7rem;
+          color: $secondary-color;
+          text-transform: uppercase;
+        }
+        .value {
+          font-weight: 600;
+          color: $text-color;
+        }
+      }
+    }
+  }
+}
+
+// --- Login Page ---
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+}
+
+.login-card {
+  background: $white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: $shadow-md;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  h2 {
+    margin-bottom: 0.5rem;
+    color: $primary-color;
+  }
+  .text-muted {
+    color: $secondary-color;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  text-align: left;
+  label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: bold;
+  }
+  input {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    font-size: 1rem;
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+    }
+  }
+}
+
+#login-form #error-msg {
+  margin-bottom: 1rem; // Твій фікс відступу
+}
+
+// --- Footer ---
+.main-footer {
+  background-color: $white;
+  border-top: 1px solid $border-color;
+  padding: 1.5rem 0;
+  margin-top: auto;
+  font-size: 0.9rem;
+  color: $secondary-color;
+
+  .footer-content {
+    display: flex;
+    flex-direction: column; // Мобільний: Вертикально
+    align-items: center; // Мобільний: По центру
+    gap: 1rem;
+  }
+
+  // --- Блок посилань ---
+  .footer-links {
+    order: 1; // Мобільний: Йде першим
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+
+    a {
+      color: $secondary-color;
+      transition: color 0.2s;
+      &:hover {
+        color: $primary-color;
+      }
+    }
+
+    .separator {
+      color: $border-color;
+      font-size: 0.8rem;
+    }
+  }
+
+  // --- Блок копірайту ---
+  .footer-copyright {
+    order: 2; // Мобільний: Йде другим
+
+    .footer-brand {
+      font-weight: 600;
+      color: $text-color;
+      &:hover {
+        color: $primary-color;
+      }
+    }
+  }
+
+  // --- Desktop (Планшет і вище) ---
+  @media (min-width: 768px) {
+    .footer-content {
+      flex-direction: row; // В рядок
+      justify-content: space-between; // Розсуваємо по краях
+    }
+
+    .footer-links {
+      order: 2; // Десктоп: Справа (другий)
+    }
+
+    .footer-copyright {
+      order: 1; // Десктоп: Зліва (перший)
     }
   }
 }

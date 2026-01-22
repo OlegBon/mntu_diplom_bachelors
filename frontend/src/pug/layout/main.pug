@@ -5,29 +5,55 @@ html(lang="uk")
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
         title Diamond ID System
         link(rel="stylesheet", href="css/main.css")
-        // Можна підключити Google Fonts тут, якщо захочемо
-    
+        link(rel="preconnect" href="https://fonts.googleapis.com")
+        link(rel="preconnect" href="https://fonts.gstatic.com" crossorigin)
+        link(href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet")
+
     body
-        // Header (Шапка) - спільна для всіх
         header.main-header
             .container
                 .header-content
-                    .logo 💎 Diamond ID
-                    nav.main-nav
-                        // Цей блок ми потім будемо ховати/показувати через JS
-                        ul#nav-links
-                            li: a(href="/dashboard.html") Список звітів
-                            li: a(href="/create.html") Новий звіт
-                            li: button#logout-btn.btn.btn-sm Вийти
-        
-        // Main Content (Сюди вставлятимуться сторінки)
+                    //- Логотип (зліва)
+                    a.logo(href="/")
+                        span.logo-icon 💎
+                        span.logo-text Diamond ID
+                    
+                    //- Навігація (по центру на десктопі, схована на мобайл)
+                    nav#main-nav.main-nav
+                        ul#nav-list
+                            li: a(href="/") Головна
+                            li: a(href="#") Про систему
+
+                    //- Група правих елементів (Auth + Burger)
+                    .header-right
+                        //- 3. Авторизація (юзер або вхід)
+                        .header-auth#auth-block
+                            //- JS наповнить це
+
+                        //- Бургер (тільки мобайл, завжди справа)
+                        button#burger-btn.burger-btn(type="button" aria-label="Menu")
+                            span
+                            span
+                            span
+
         main.page-content
             .container
                 block content
 
-        // Footer
         footer.main-footer
             .container
-                p &copy; 2026 Diamond ID System. MNTU Diploma Project.
+                .footer-content
+                    //- Блок 1: Копірайт (На мобайл буде другим)
+                    p.footer-copyright
+                        | &copy; 
+                        span#copyright-year 2026
+                        | &nbsp;
+                        a.footer-brand(href="/") Diamond ID System
+                    
+                    //- Блок 2: Посилання (На мобайл буде першим)
+                    .footer-links
+                        a(href="#") Privacy Policy
+                        span.separator |
+                        a(href="#") Documentation
 
-        script(src="js/main.js" type="module")
+        script(type="module" src="js/main.js")

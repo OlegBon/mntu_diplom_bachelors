@@ -1,22 +1,23 @@
 // --- Colors ---
-$primary-color: #0d6efd; // Основний синій (як Bootstrap)
-$secondary-color: #6c757d; // Сірий для другорядного тексту
-$success-color: #198754; // Зелений (для "Sold")
-$danger-color: #dc3545; // Червоний (для помилок)
-$light-bg: #f8f9fa; // Світлий фон сторінки
-$dark-text: #212529; // Темний текст
+$primary-color: #2563eb;
+$primary-hover: #1d4ed8;
+$secondary-color: #64748b;
+$bg-color: #f8fafc;
+$text-color: #1e293b;
 $white: #ffffff;
-$border-color: #dee2e6;
+$border-color: #e2e8f0;
 
-// --- Spacing ---
+// --- Тіні ---
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+// --- Layout ---
+$container-width: 1200px;
 $spacer: 1rem;
 
 // --- Fonts ---
-$font-family-base:
+$font-main:
+  "Inter",
   system-ui,
   -apple-system,
-  "Segoe UI",
-  Roboto,
-  "Helvetica Neue",
-  Arial,
   sans-serif;
