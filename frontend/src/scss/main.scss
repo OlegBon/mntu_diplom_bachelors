@@ -626,6 +626,377 @@ ul {
   margin-bottom: 1rem; // Твій фікс відступу
 }
 
+// --- Dashboard Page ---
+.dashboard-page {
+  // Header area
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    .page-title {
+      font-size: 1.8rem;
+      color: $text-color;
+      margin-bottom: 0.2rem;
+    }
+    .page-subtitle {
+      color: $secondary-color;
+      font-size: 0.95rem;
+    }
+  }
+
+  // --- Filters Logic ---
+  // Контейнер, який обгортає і звичайні фільтри, і розширені
+  .filters-container {
+    margin-bottom: 1.5rem;
+  }
+
+  // Верхня панель (Filters Bar)
+  .filters-bar {
+    background: $white;
+    padding: 1rem;
+    border-radius: 8px; // Заокруглення за замовчуванням
+    border: 1px solid $border-color;
+
+    // Важливо: прибираємо margin-bottom тут, бо він тепер у container
+    margin-bottom: 0;
+
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    // Коли панель розширених фільтрів відкрита - прибираємо нижні заокруглення
+    &:has(+ .advanced-filters.is-visible) {
+      border-radius: 8px 8px 0 0;
+      border-bottom: 1px solid transparent; // Щоб злилося з нижньою панеллю
+    }
+
+    .search-group {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+
+      input {
+        width: 100%;
+        padding: 0.6rem 0.6rem 0.6rem 2.2rem;
+        border: 1px solid $border-color;
+        border-radius: 6px;
+        font-family: $font-main;
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+        }
+      }
+      .search-icon {
+        position: absolute;
+        left: 0.7rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $secondary-color;
+        font-size: 0.9rem;
+      }
+    }
+
+    .filters-group {
+      display: flex;
+      gap: 1rem;
+
+      @media (max-width: 768px) {
+        width: 100%;
+        flex-wrap: wrap;
+
+        .form-select {
+          flex: 1 1 45%;
+          min-width: 140px;
+        }
+        .form-select:last-child {
+          flex-basis: 100%;
+          max-width: 100%;
+        }
+      }
+
+      .form-select {
+        padding: 0.6rem;
+        border: 1px solid $border-color;
+        border-radius: 6px;
+        background: $white;
+        color: $text-color;
+        cursor: pointer;
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+        }
+      }
+    }
+
+    // Кнопка тоггл (⚙️ Фільтри)
+    .btn-icon-text {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+
+      @media (max-width: 500px) {
+        .hide-mobile {
+          display: none;
+        }
+      }
+    }
+  }
+
+  // --- Advanced Filters Panel (Винесено правильно!) ---
+  .advanced-filters {
+    background: #f8fafc;
+    border: 1px solid $border-color;
+    border-top: none; // Пристиковуємо до верхньої панелі
+    border-radius: 0 0 8px 8px;
+    padding: 1.5rem;
+    margin-top: -1px; // Щоб перекрити бордер верхньої панелі
+
+    // Логіка відкриття/закриття
+    display: none; // ХОВАЄМО ЗА ЗАМОВЧУВАННЯМ
+
+    &.is-visible {
+      display: block; // ПОКАЗУЄМО ЯКЩО Є КЛАС
+      animation: slideDownFade 0.3s ease-out;
+    }
+
+    // Сітка фільтрів
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.5rem;
+      align-items: end;
+
+      .filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+
+        // Широкий блок для Дати
+        &.span-2 {
+          grid-column: span 2; // Займає 2 колонки
+
+          // На планшетах/мобільних, де колонок мало, скидаємо цю поведінку
+          @media (max-width: 600px) {
+            grid-column: span 1;
+          }
+        }
+
+        label {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: $secondary-color;
+        }
+
+        .form-select,
+        .form-control {
+          width: 100%;
+          padding: 0.5rem;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          font-size: 0.9rem;
+        }
+
+        .range-inputs {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          input {
+            width: 50%;
+          }
+          span {
+            color: $secondary-color;
+          }
+        }
+      }
+
+      .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-start;
+        height: 38px;
+      }
+    }
+  }
+
+  @keyframes slideDownFade {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  // Table Styles
+  .table-container {
+    background: $white;
+    border-radius: 8px;
+    border: 1px solid $border-color;
+    overflow-x: auto;
+    box-shadow: $shadow-sm;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+
+    th,
+    td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid $border-color;
+    }
+
+    thead {
+      background-color: #f8fafc;
+      th {
+        font-weight: 600;
+        color: $secondary-color;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+
+    tbody tr {
+      transition: background 0.1s;
+      &:last-child td {
+        border-bottom: none;
+      }
+      &:hover {
+        background-color: #f1f5f9;
+      }
+    }
+
+    .fw-bold {
+      font-weight: 600;
+      color: $text-color;
+    }
+    .text-muted {
+      color: $secondary-color;
+      font-size: 0.9rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+
+      &.active {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      &.sold {
+        background-color: #f1f5f9;
+        color: #475569;
+      }
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+      .btn-icon {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+
+    // Стиль для клікабельного ID
+    .id-link {
+      font-weight: 700;
+      color: $primary-color;
+      text-decoration: none;
+      transition: color 0.2s;
+
+      &:hover {
+        color: $primary-hover;
+        text-decoration: underline;
+      }
+    }
+
+    // Оновлення для кнопок дій (щоб посилання a.btn-icon виглядало як кнопка)
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+
+      .btn-icon {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        opacity: 0.6;
+        transition:
+          opacity 0.2s,
+          transform 0.2s;
+
+        // Скидаємо стилі посилання, якщо це <a>
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        align-items: center;
+
+        &:hover {
+          opacity: 1;
+          transform: scale(1.1); // Легке збільшення при наведенні
+        }
+      }
+    }
+  }
+
+  // Pagination
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+
+    .page-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid $border-color;
+      background: $white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover:not(.disabled) {
+        border-color: $primary-color;
+        color: $primary-color;
+      }
+      &.active {
+        background-color: $primary-color;
+        color: $white;
+        border-color: $primary-color;
+      }
+      &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
 // --- Footer ---
 .main-footer {
   background-color: $white;

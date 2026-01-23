@@ -67,7 +67,7 @@ function updateHeaderUI(isAuthenticated) {
     // Меню Експерта (Навігація)
     if (navList && !document.getElementById("nav-dashboard")) {
       navList.innerHTML = `
-                <li id="nav-dashboard"><a href="/">Звіти</a></li>
+                <li id="nav-dashboard"><a href="/dashboard.html">Звіти</a></li>
                 <li id="nav-create"><a href="/create-report.html">Новий звіт</a></li>
                 <li id="nav-analytics"><a href="/ml-analysis.html">Аналітика</a></li>
              `;
@@ -162,6 +162,42 @@ document.addEventListener("DOMContentLoaded", () => {
         // Перенаправляємо на сторінку перегляду (з параметром ?id=...)
         // Поки що сторінки view-report.html немає, але посилання буде правильним
         window.location.href = `/view-report.html?id=${encodeURIComponent(query)}`;
+      }
+    });
+  }
+
+  // --- Advanced Filters Toggle ---
+  const toggleFiltersBtn = document.getElementById("toggle-filters");
+  const advancedFiltersPanel = document.getElementById("advanced-filters");
+
+  if (toggleFiltersBtn && advancedFiltersPanel) {
+    toggleFiltersBtn.addEventListener("click", () => {
+      // Перемикаємо клас видимості
+      advancedFiltersPanel.classList.toggle("is-visible");
+
+      // Змінюємо стиль кнопки (активна/неактивна)
+      toggleFiltersBtn.classList.toggle("btn-primary");
+      toggleFiltersBtn.classList.toggle("btn-outline");
+    });
+  }
+
+  // --- Dashboard Search (натискання Enter) ---
+  // Шукаємо інпут всередині .search-group на сторінці дашборду
+  const dashboardSearchInput = document.querySelector(
+    ".filters-bar .search-group input",
+  );
+
+  if (dashboardSearchInput) {
+    dashboardSearchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault(); // Щоб форма не сабмітилась, якщо вона є
+        const query = dashboardSearchInput.value.trim();
+
+        if (query) {
+          console.log(`🔎 Шукаємо звіт: ${query}`);
+          // Тут пізніше буде виклик API: fetchReports({ search: query })
+          alert(`Виконання пошуку для: ${query}`); // Тимчасова заглушка
+        }
       }
     });
   }

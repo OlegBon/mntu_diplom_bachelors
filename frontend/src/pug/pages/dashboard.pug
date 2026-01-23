@@ -1,0 +1,162 @@
+extends ../layout/main
+
+block content
+    .dashboard-page
+        //- Верхня частина: Заголовок і Кнопка
+        .page-header
+            div
+                h1.page-title Всі звіти
+                p.page-subtitle Управління сертифікатами та оцінками
+            
+            a.btn.btn-primary(href="/create-report.html")
+                span +
+                | Новий звіт
+
+        //- Панель фільтрів
+        .filters-container
+            //- Верхній рядок (Швидкі фільтри)
+            .filters-bar
+                .search-group
+                    span.search-icon 🔍
+                    input(type="text" placeholder="Пошук за номером звіту...")
+                
+                //- Кнопка (відкриває детальні фільтри)
+                button#toggle-filters.btn.btn-outline.btn-icon-text
+                    span ⚙️
+                    span.hide-mobile Фільтри
+
+                .filters-group
+                    //- Основні фільтри
+                    select.form-select
+                        option(value="all") Всі статуси
+                        option(value="active") В продажу (Active)
+                        option(value="sold") Продано (Sold)
+                    
+                    select.form-select
+                        option(value="newest") Спочатку нові
+                        option(value="expensive") Спочатку дорогі
+                    
+                    select.form-select
+                        option(value="all_users") Всі експерти
+                        option(value="me") Мої звіти
+                        option(value="expert_2") Bondarenko O.
+
+            //- Панель розширених фільтрів
+            #advanced-filters.advanced-filters
+                form.filters-grid
+                    //- 1. Shape
+                    .filter-item
+                        label Форма (Shape)
+                        select.form-select
+                            option(value="") Будь-яка
+                            option(value="Round") Round
+                            option(value="Princess") Princess
+                            option(value="Oval") Oval
+                            option(value="Emerald") Emerald
+                    
+                    //- 2. Carat
+                    .filter-item
+                        label Вага (Carat)
+                        .range-inputs
+                            input.form-control(type="number" step="0.01" placeholder="Від")
+                            span -
+                            input.form-control(type="number" step="0.01" placeholder="До")
+
+                    //- 3. Color
+                    .filter-item
+                        label Колір (Color)
+                        select.form-select
+                            option(value="") Будь-який
+                            option(value="D") D (Colorless)
+                            option(value="E") E
+                            option(value="F") F
+                            option(value="G") G (Near Colorless)
+                            option(value="H") H
+                    
+                    //- 4. Clarity
+                    .filter-item
+                        label Чистота (Clarity)
+                        select.form-select
+                            option(value="") Будь-яка
+                            option(value="IF") IF (Internally Flawless)
+                            option(value="VVS1") VVS1
+                            option(value="VS1") VS1
+                            option(value="SI1") SI1
+                    
+                    //- 5. Price
+                    .filter-item
+                        label Ціна ($)
+                        .range-inputs
+                            input.form-control(type="number" placeholder="Min")
+                            span -
+                            input.form-control(type="number" placeholder="Max")
+
+                    //- 6. Date (клас span-2)
+                    .filter-item.span-2
+                        label Дата створення
+                        .range-inputs
+                            input.form-control(type="date")
+                            span -
+                            input.form-control(type="date")
+
+                    //- 7. Buttons
+                    .filter-actions
+                        button.btn.btn-primary.btn-sm(type="button") Застосувати
+                        button.btn.btn-outline.btn-sm(type="reset") Скинути
+
+        //- Таблиця даних
+        .table-container
+            table.data-table
+                thead
+                    tr
+                        th ID звіту
+                        th Дата
+                        th Форма
+                        th Вага (ct)
+                        th Колір
+                        th Чистота
+                        th Ціна ($)
+                        th Статус
+                        th Дії
+                tbody
+                    //- Тестові дані (mock data)
+                    - 
+                        var reports = [
+                            {id: 'DR-00001', date: '23.01.2026', shape: 'Round', carat: '1.05', color: 'D', clarity: 'IF', price: '12,500', status: 'active'},
+                            {id: 'DR-00002', date: '22.01.2026', shape: 'Princess', carat: '0.90', color: 'G', clarity: 'VS1', price: '4,200', status: 'sold'},
+                            {id: 'DR-00003', date: '21.01.2026', shape: 'Oval', carat: '2.10', color: 'E', clarity: 'VVS1', price: '28,000', status: 'active'},
+                            {id: 'DR-00004', date: '20.01.2026', shape: 'Emerald', carat: '1.50', color: 'H', clarity: 'SI1', price: '5,800', status: 'active'},
+                            {id: 'DR-00005', date: '19.01.2026', shape: 'Round', carat: '0.50', color: 'F', clarity: 'VS2', price: '1,900', status: 'sold'},
+                            {id: 'DR-00006', date: '18.01.2026', shape: 'Marquise', carat: '1.20', color: 'I', clarity: 'SI2', price: '3,100', status: 'active'},
+                            {id: 'DR-00007', date: '17.01.2026', shape: 'Pear', carat: '3.01', color: 'D', clarity: 'FL', price: '95,000', status: 'active'},
+                            {id: 'DR-00008', date: '16.01.2026', shape: 'Cushion', carat: '1.01', color: 'E', clarity: 'VVS2', price: '8,400', status: 'sold'}
+                        ]
+
+                    each item in reports
+                        tr
+                            td
+                                a.id-link(href=`/view-report.html?id=${item.id}`)= item.id
+                            td.text-muted= item.date
+                            td= item.shape
+                            td.fw-bold= item.carat
+                            td= item.color
+                            td= item.clarity
+                            td $#{item.price}
+                            td
+                                if item.status === 'active'
+                                    span.status-badge.active Active
+                                else
+                                    span.status-badge.sold Sold
+                            td
+                                .actions
+                                    button.btn-icon(title="Редагувати") ✏️
+                                    button.btn-icon(title="Друк") 🖨️
+                                    a.btn-icon(href=`/view-report.html?id=${item.id}` title="Переглянути") 👁️
+
+        //- Пагінація
+        .pagination
+            button.page-btn.disabled &laquo;
+            button.page-btn.active 1
+            button.page-btn 2
+            button.page-btn 3
+            button.page-btn &raquo;
