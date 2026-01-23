@@ -1,10 +1,10 @@
-from sqlalchemy import Column, Integer, String, DECIMAL, Date, ForeignKey, Enum, TIMESTAMP, Boolean, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DECIMAL, Date, ForeignKey, Enum, TIMESTAMP, Boolean, UniqueConstraint, Text
 from sqlalchemy.sql import func
 from .database import Base
 
 class Expert(Base):
     __tablename__ = "experts"
-    __table_args__ = {"schema": "diamond_oltp"} # Явно вказуємо базу
+    __table_args__ = {"schema": "diamond_oltp"}
 
     expert_id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False)
@@ -22,32 +22,50 @@ class DiamondReport(Base):
     report_id = Column(String(20), primary_key=True, index=True)
     report_date = Column(Date, nullable=False)
     
-    # Фізичні виміри
-    table_percent = Column(DECIMAL(5,2), nullable=True)
-    depth_percent = Column(DECIMAL(5,2), nullable=True)
-    crown_angle = Column(DECIMAL(5,2), nullable=True)
-    pavilion_angle = Column(DECIMAL(5,2), nullable=True)
+    # --- Форма (Обов'язкове поле) ---
+    shape = Column(String(50), nullable=False) 
 
-    # Основні характеристики
+    # --- Геометрія (3D) ---
+    measurements_length = Column(DECIMAL(5, 2))
+    measurements_width = Column(DECIMAL(5, 2))
+    measurements_depth = Column(DECIMAL(5, 2))
+
+    # --- Фізичні параметри (IDC) ---
+    table_percent = Column(DECIMAL(5,2))
+    depth_percent = Column(DECIMAL(5,2))
+    crown_angle = Column(DECIMAL(5,2))
+    pavilion_angle = Column(DECIMAL(5,2))
+    
+    # --- Деталі ---
+    girdle_thickness = Column(String(50))
+    culet_size = Column(String(50))
+
+    # --- 4C ---
     carat_weight = Column(DECIMAL(10,2))
     color_grade = Column(Integer)
     clarity_grade = Column(Integer)
-    
-    # Оцінки (Grades)
     cut_grade = Column(Integer)
-    polish_grade = Column(Integer)
-    proportions_grade = Column(Integer)
-    symmetry_grade = Column(Integer)
     
+    # --- Finish ---
+    polish_grade = Column(Integer)
+    symmetry_grade = Column(Integer)
+    proportions_grade = Column(Integer)
     fluorescence_grade = Column(Integer)
     stone_origin = Column(Integer)
     
-    # Мета-дані та продажі
+    # --- Метадані ---
     expert_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"))
-    evaluation_time_min = Column(Integer)
+    evaluation_time_sec = Column(Integer)
+    
+    # --- Аналітика ---
+    expert_comment = Column(Text, nullable=True)
     report_notes_length = Column(Integer)
     report_sentiment = Column(Integer)
     
+    plotting_image = Column(String(255), nullable=True)
+    real_image = Column(String(255), nullable=True)
+    
+    # --- Ринок ---
     price = Column(DECIMAL(12,2))
     is_investment_grade = Column(Boolean, default=False)
     is_report_rejected = Column(Boolean, default=False)
@@ -57,33 +75,22 @@ class DiamondReport(Base):
 
 class GradeMapping(Base):
     __tablename__ = "grade_mappings"
-    
-    # Визначаємо схему і додаємо обмеження:
-    # Комбінація (category + grade_value) має бути унікальною.
-    # Тобто не може бути двох записів про 'color' з value '2'.
     __table_args__ = (
         UniqueConstraint('category', 'grade_value', name='uix_category_grade'),
         {"schema": "diamond_market"}
     )
 
-    # Класичний Primary Key
     id = Column(Integer, primary_key=True, index=True)
-    
-    # Інформативні поля
-    category = Column(String(50), nullable=False)    # напр. 'color'
-    grade_value = Column(Integer, nullable=False)    # напр. 2
-    grade_label = Column(String(50), nullable=False) # напр. 'F'
+    category = Column(String(50), nullable=False)
+    grade_value = Column(Integer, nullable=False)
+    grade_label = Column(String(50), nullable=False)
 
 class MarketPriceRef(Base):
     __tablename__ = "market_price_reference"
     __table_args__ = {"schema": "diamond_market"}
 
     id = Column(Integer, primary_key=True, index=True)
-    
-    # Ринковий індекс або базова ціна
-    price_index_value = Column(DECIMAL(10,4), nullable=False) 
-    
-    # Хто і коли оновив
-    updated_by = Column(Integer, nullable=True) # NULL, якщо оновила система
+    price_index_value = Column(DECIMAL(10,4), nullable=False)
+    updated_by = Column(Integer, nullable=True)
     updated_at = Column(TIMESTAMP, server_default=func.now())
     notes = Column(String(255), nullable=True)

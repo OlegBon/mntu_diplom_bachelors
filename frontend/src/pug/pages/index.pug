@@ -44,30 +44,30 @@ block content
             p Публічний реєстр сертифікованих діамантів
 
         .diamonds-grid
-            //- Генеруємо 4 приклади карток
-            each val, index in [1, 2, 3, 4]
-                //- Імітуємо різні дані для різноманіття
-                - var shapes = ['Round Brilliant', 'Princess', 'Oval', 'Emerald']
-                - var carats = ['1.05', '0.90', '2.10', '1.50']
-                - var colors = ['D', 'E', 'G', 'F']
-                - var clarities = ['VVS1', 'VS1', 'SI1', 'IF']
-                
-                .diamond-card
-                    .diamond-img 💎
-                    .diamond-id DR-0000#{val}
-                    h3= shapes[index]
+                //- Генеруємо 4 приклади карток
+                each val, index in [1, 2, 3, 4]
+                    //- Оновлені назви форм (як у базі)
+                    - var shapes = ['Round', 'Princess', 'Oval', 'Emerald']
+                    - var carats = ['1.05', '0.90', '2.10', '1.50']
+                    - var colors = ['D', 'E', 'G', 'F']
+                    - var clarities = ['VVS1', 'VS1', 'SI1', 'IF']
+                    - var prices = ['12,500', '4,200', '28,000', '5,800']
                     
-                    .specs-list
-                        .spec-item
-                            span.label Carat
-                            span.value= carats[index]
-                        .spec-item
-                            span.label Color
-                            span.value= colors[index]
-                        .spec-item
-                            span.label Clarity
-                            span.value= clarities[index]
-                    
-                    //- Кнопка веде на сторінку перегляду
-                    a.btn.btn-sm.btn-outline(href=`/view-report.html?id=DR-0000${val}`) 
-                        | Переглянути паспорт
+                    .diamond-card
+                        .diamond-img 💎
+                        .diamond-id DR-0000#{val}
+                        h3 #{shapes[index]} #{carats[index]} ct
+                        
+                        .specs-list
+                            .spec-item
+                                span.label Color
+                                span.value= colors[index]
+                            .spec-item
+                                span.label Clarity
+                                span.value= clarities[index]
+                            .spec-item
+                                span.label Price
+                                span.value $#{prices[index]}
+                        
+                        a.btn.btn-sm.btn-outline(href=`/view-report.html?id=DR-0000${val}`) 
+                            | Переглянути паспорт

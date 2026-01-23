@@ -2,17 +2,15 @@ import mysql.connector
 import pandas as pd
 import os
 import random
+import math
 import sys
 from dotenv import load_dotenv
 
-# Додаємо кореневу папку проєкту в sys.path, щоб бачити папку backend
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from backend import models, database  # Імпортуємо наші моделі та налаштування БД
+from backend import models, database 
 
 load_dotenv()
 
-# Підключення до MariaDB (для "сирих" запитів)
 def get_connection(db_name=None):
     return mysql.connector.connect(
         host=os.getenv("DB_HOST", "localhost"),
@@ -21,184 +19,183 @@ def get_connection(db_name=None):
         database=db_name
     )
 
-def generate_measurements(proportions_grade):
-    """
-    Reverse Engineering: Генерує правдоподібні розміри на основі оцінки.
-    """
-    if proportions_grade == 0: # EXCELLENT
-        table = round(random.uniform(56.0, 61.0), 1)
-        depth = round(random.uniform(59.0, 62.5), 1)
-        crown = round(random.uniform(34.0, 35.0), 1)
-        pavilion = round(random.uniform(40.6, 40.9), 1)
-    
-    elif proportions_grade == 1: # VERY GOOD
-        table = round(random.uniform(53.0, 63.0), 1)
-        depth = round(random.uniform(58.0, 63.5), 1)
-        crown = round(random.uniform(32.5, 36.0), 1)
-        pavilion = round(random.uniform(40.4, 41.2), 1)
-        
-    else: # GOOD / FAIR
-        table = round(random.uniform(64.0, 68.0), 1)
-        depth = round(random.uniform(64.0, 66.0), 1)
-        crown = round(random.uniform(36.0, 40.0), 1)
-        pavilion = round(random.uniform(42.0, 44.0), 1)
+def generate_dimensions(carat, shape, depth_pct):
+    # Базова імітація розмірів в залежності від форми
+    if shape == 'Round':
+        avg_diam = 6.4 * math.pow(carat, 1/3)
+        ratio = 1.0
+    elif shape in ['Princess', 'Cushion']:
+        avg_diam = 5.5 * math.pow(carat, 1/3) # Квадратні менші візуально
+        ratio = 1.0
+    elif shape == 'Oval':
+        avg_diam = 6.0 * math.pow(carat, 1/3)
+        ratio = 1.4 # Витягнутий
+    elif shape == 'Emerald':
+        avg_diam = 5.8 * math.pow(carat, 1/3)
+        ratio = 1.35
+    elif shape == 'Marquise':
+        avg_diam = 5.2 * math.pow(carat, 1/3)
+        ratio = 1.85
+    elif shape == 'Pear':
+        avg_diam = 5.8 * math.pow(carat, 1/3)
+        ratio = 1.55
+    else:
+        avg_diam = 6.0 * math.pow(carat, 1/3)
+        ratio = 1.0
 
-    return table, depth, crown, pavilion
+    offset = random.uniform(-0.05, 0.05)
+    width = round(avg_diam + offset, 2)
+    length = round(width * ratio, 2)
+    depth_mm = round(width * (depth_pct / 100), 2)
+    
+    return length, width, depth_mm
 
 def seed_data():
-    # Створення баз даних (через raw connection, бо SQLAlchemy не вміє CREATE DATABASE)
     raw_conn = get_connection()
     raw_cursor = raw_conn.cursor()
     
-    print(" -> Перевірка/Створення баз даних...")
-    raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_oltp")
-    raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_market")
+    print(" -> [1/5] Перестворення баз даних...")
+    raw_cursor.execute("DROP DATABASE IF EXISTS diamond_oltp")
+    raw_cursor.execute("DROP DATABASE IF EXISTS diamond_market")
+    # Analytics можна залишити, якщо там нічого важливого
+    raw_cursor.execute("CREATE DATABASE diamond_oltp")
+    raw_cursor.execute("CREATE DATABASE diamond_market")
     raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_analytics")
-
-    print(" -> Видалення застарілих таблиць ...")
-    raw_cursor.execute("DROP TABLE IF EXISTS diamond_market.grade_mappings")
-    raw_cursor.execute("DROP TABLE IF EXISTS diamond_market.market_price_reference")
-
-    raw_cursor.execute("SET FOREIGN_KEY_CHECKS = 0") # Вимикаємо перевірку ключів
-    raw_cursor.execute("DROP TABLE IF EXISTS diamond_oltp.experts") 
-    raw_cursor.execute("DROP TABLE IF EXISTS diamond_oltp.diamond_reports")
-    raw_cursor.execute("SET FOREIGN_KEY_CHECKS = 1") # Вмикаємо перевірку ключів назад
-
+    
     raw_conn.commit()
     raw_cursor.close()
     raw_conn.close()
 
-    # Створення таблиць (через SQLAlchemy models) 
-    print(" -> Створення таблиць згідно з models.py...")
-    # Ця магічна команда дивиться в models.py і створює таблиці, якщо їх немає
+    print(" -> [2/5] Створення таблиць...")
     models.Base.metadata.create_all(bind=database.engine)
 
-    # Наповнення довідників (Market)
+    # --- MARKET ---
+    print(" -> [3/5] Наповнення Market (Mappings)...")
     conn_market = get_connection("diamond_market")
     cursor_market = conn_market.cursor()
     
-    print(" -> Наповнення довідників (Mappings)...")
-    
-    # Очистка старих мапінгів
-    cursor_market.execute("TRUNCATE TABLE grade_mappings")
-    
     mappings = []
     
-    # Color: 0=D, 1=E, 2=F ...
+    # 1. Shape
+    shapes_list = ['Round', 'Princess', 'Oval', 'Emerald', 'Marquise', 'Cushion', 'Pear', 'Radiant', 'Heart']
+    for i, l in enumerate(shapes_list): 
+        # category='shape', value=i (для порядку), label=Назва
+        mappings.append(('shape', i, l))
+
+    # 2. Color
     colors = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N-Z']
-    for i, label in enumerate(colors):
-        mappings.append(('color', i, label))
+    for i, l in enumerate(colors): mappings.append(('color', i, l))
         
-    # Clarity: 0=FL, 1=IF ...
+    # 3. Clarity
     clarities = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'I1', 'I2', 'I3']
-    for i, label in enumerate(clarities):
-        mappings.append(('clarity', i, label))
+    for i, l in enumerate(clarities): mappings.append(('clarity', i, l))
         
-    # Cut / Polish / Symmetry: 0=Excellent ...
+    # 4. Grades (Cut, Polish, Sym, Prop)
     cuts = ['Excellent', 'Very Good', 'Good', 'Fair', 'Poor']
-    for i, label in enumerate(cuts):
-        mappings.append(('cut', i, label))
-        mappings.append(('polish', i, label))
-        mappings.append(('symmetry', i, label))
-        mappings.append(('proportions', i, label)) # Додаємо і це
+    for i, l in enumerate(cuts): 
+        mappings.append(('cut', i, l))
+        mappings.append(('polish', i, l))
+        mappings.append(('symmetry', i, l))
+        mappings.append(('proportions', i, l))
 
-    # Fluorescence
-    fluorescences = ['None', 'Faint', 'Medium', 'Strong', 'Very Strong']
-    for i, label in enumerate(fluorescences):
-        mappings.append(('fluorescence', i, label))
-        
-    # Origin
+    # 5. Fluorescence
+    fluro = ['None', 'Faint', 'Medium', 'Strong', 'Very Strong']
+    for i, l in enumerate(fluro): mappings.append(('fluorescence', i, l))
+
+    # 6. Origin
     origins = ['Natural', 'Lab-Grown']
-    for i, label in enumerate(origins):
-        mappings.append(('origin', i, label))
+    for i, l in enumerate(origins): mappings.append(('origin', i, l))
 
-    cursor_market.executemany(
-        "INSERT INTO grade_mappings (category, grade_value, grade_label) VALUES (%s, %s, %s)",
-        mappings
-    )
-    
-    # Додаємо початкову ринкову ціну (Базовий індекс)
-    cursor_market.execute("TRUNCATE TABLE market_price_reference")
-    cursor_market.execute(
-        "INSERT INTO market_price_reference (price_index_value, updated_by, notes) VALUES (6000.00, 0, 'Initial Base Price')"
-    )
+    cursor_market.executemany("INSERT INTO grade_mappings (category, grade_value, grade_label) VALUES (%s, %s, %s)", mappings)
+    cursor_market.execute("INSERT INTO market_price_reference (price_index_value, updated_by, notes) VALUES (6000.00, 1, 'Base Index 2026')")
     
     conn_market.commit()
     cursor_market.close()
     conn_market.close()
 
-    # Наповнення даними
-    conn = get_connection("diamond_oltp") # Підключаємося вже до конкретної бази
+    # --- OLTP ---
+    conn = get_connection("diamond_oltp")
     cursor = conn.cursor()
 
-    # Експерти
-    print(" -> Додавання експертів...")
-    # ID, username, password, role, First, Last, Middle
+    print(" -> [4/5] Додавання експертів...")
     experts_data = [
-        (6, 'admin', 'admin_pass', 'admin', 'System', 'Admin', 'Zero'),
-        (1, 'expert_1', 'pass_1', 'gemologist', 'Expert', 'One', 'First'),
-        (2, 'expert_2', 'pass_2', 'gemologist', 'Expert', 'Two', 'Second'),
-        (3, 'expert_3', 'pass_3', 'gemologist', 'Expert', 'Three', 'Third'),
-        (4, 'expert_4', 'pass_4', 'gemologist', 'Expert', 'Four', 'Fourth'),
-        (5, 'expert_5', 'pass_5', 'gemologist', 'Expert', 'Five', 'Fifth'),
+        (1, 'admin', 'admin_pass', 'admin', 'System', 'Admin', 'Zero'),
+        (2, 'expert_1', 'pass_1', 'gemologist', 'Expert', 'One', 'First'),
+        (3, 'expert_2', 'pass_2', 'gemologist', 'Expert', 'Two', 'Second'),
+        (4, 'expert_3', 'pass_3', 'gemologist', 'Expert', 'Three', 'Third'),
+        (5, 'expert_4', 'pass_4', 'gemologist', 'Expert', 'Four', 'Fourth'),
+        (6, 'expert_5', 'pass_5', 'gemologist', 'Expert', 'Five', 'Fifth'),
     ]
     cursor.executemany(
-        """INSERT IGNORE INTO experts 
-           (expert_id, username, password_hash, role, first_name, last_name, middle_name) 
-           VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+        "INSERT INTO experts (expert_id, username, password_hash, role, first_name, last_name, middle_name) VALUES (%s, %s, %s, %s, %s, %s, %s)",
         experts_data
     )
-    conn.commit()
 
-    # Звіти (Діаманти)
+    print(" -> [5/5] Генерація звітів...")
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DATA_PATH = os.path.join(BASE_DIR, '..', 'data', 'diamonds_dataset.csv')
-
-    print(f" -> Читання CSV та генерація вимірів: {DATA_PATH}")
     
     try:
         df = pd.read_csv(DATA_PATH)
-    except FileNotFoundError:
-        print(f"ПОМИЛКА: Не знайдено файл {DATA_PATH}")
-        return
-
-    # Очистка для SQL
-    df['sale_date'] = df['sale_date'].where(pd.notnull(df['sale_date']), None)
-
-    count = 0
-    print(" -> Інсерт даних (це може зайняти кілька секунд)...")
-    
-    for _, row in df.iterrows():
-        # Генерація фейкових вимірів
-        p_grade = row['proportions_grade']
-        table, depth, crown, pav = generate_measurements(p_grade)
+        df['sale_date'] = df['sale_date'].where(pd.notnull(df['sale_date']), None)
         
-        sql = """INSERT IGNORE INTO diamond_reports 
-                 (report_id, report_date, 
-                  table_percent, depth_percent, crown_angle, pavilion_angle,
-                  carat_weight, color_grade, clarity_grade, cut_grade, 
-                  polish_grade, proportions_grade, symmetry_grade, fluorescence_grade, stone_origin, 
-                  expert_id, evaluation_time_min, report_notes_length, report_sentiment, price, 
-                  is_investment_grade, is_report_rejected, is_sold, days_on_market, sale_date) 
-                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-        
-        values = (
-            row['report_id'], row['report_date'],
-            table, depth, crown, pav,
-            row['carat_weight'], row['color_grade'], row['clarity_grade'], row['cut_grade'],
-            row['polish_grade'], row['proportions_grade'], row['symmetry_grade'], 
-            row['fluorescence_grade'], row['stone_origin'], row['expert_id'], 
-            row['evaluation_time_min'], row['report_notes_length'], row['report_sentiment'], 
-            row['price'], row['is_investment_grade'], row['is_report_rejected'], 
-            row['is_sold'], row['days_on_market'], row['sale_date']
-        )
-        cursor.execute(sql, values)
-        count += 1
+        count = 0
+        girdles = ['Thin', 'Medium', 'Slightly Thick', 'Thick', 'Very Thick']
+        culets = ['None', 'Very Small', 'Small', 'Medium']
+        comments = ["Excellent stone.", "Minor inclusions.", "Cloudy.", "Strong fluorescence.", "Perfect cut."]
 
-    conn.commit()
-    print(f" -> ✅ Успішно! Завантажено {count} діамантів.")
-    cursor.close()
-    conn.close()
+        for _, row in df.iterrows():
+            # Випадкова форма (оскільки в CSV її немає)
+            shape = random.choice(shapes_list)
+            
+            # Генерація розмірів під форму
+            length, width, depth_mm = generate_dimensions(row['carat_weight'], shape, row.get('depth_percent', 61.5))
+            
+            girdle = random.choice(girdles)
+            culet = random.choice(culets)
+            comment = random.choice(comments)
+            sentiment = 1 if "Excellent" in comment or "Perfect" in comment else 0
+            
+            expert_id = row['expert_id'] + 1
+            if expert_id > 6: expert_id = 6
+
+            sql = """INSERT INTO diamond_reports 
+                     (report_id, report_date, shape,
+                      measurements_length, measurements_width, measurements_depth,
+                      table_percent, depth_percent, crown_angle, pavilion_angle,
+                      girdle_thickness, culet_size,
+                      carat_weight, color_grade, clarity_grade, cut_grade, 
+                      polish_grade, symmetry_grade, proportions_grade, fluorescence_grade, stone_origin, 
+                      expert_id, evaluation_time_sec, 
+                      expert_comment, report_notes_length, report_sentiment,
+                      plotting_image, real_image,
+                      price, is_sold, sale_date, days_on_market) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+            
+            values = (
+                row['report_id'], row['report_date'], shape,
+                length, width, depth_mm,
+                row.get('table_percent', 57), row.get('depth_percent', 61.5), 
+                row.get('crown_angle', 34.5), row.get('pavilion_angle', 40.8),
+                girdle, culet,
+                row['carat_weight'], row['color_grade'], row['clarity_grade'], row['cut_grade'],
+                row['polish_grade'], row['symmetry_grade'], row['proportions_grade'], row['fluorescence_grade'], row['stone_origin'],
+                expert_id, int(row.get('evaluation_time_min', 15) * 60),
+                comment, row.get('report_notes_length', 0), sentiment,
+                "/uploads/plots/default.jpg", "/uploads/real/default.jpg",
+                row['price'], row['is_sold'], row['sale_date'], row['days_on_market']
+            )
+            cursor.execute(sql, values)
+            count += 1
+
+        conn.commit()
+        print(f" -> ✅ Успішно! Завантажено {count} звітів з формами та словниками.")
+
+    except Exception as e:
+        print(f"ПОМИЛКА: {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
 if __name__ == "__main__":
     seed_data()

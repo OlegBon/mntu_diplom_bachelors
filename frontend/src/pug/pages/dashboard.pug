@@ -115,21 +115,22 @@ block content
                         th Вага (ct)
                         th Колір
                         th Чистота
+                        th Cut
                         th Ціна ($)
                         th Статус
                         th Дії
                 tbody
-                    //- Тестові дані (mock data)
+                    //- Тестові дані (mock data) з доданим полем CUT
                     - 
                         var reports = [
-                            {id: 'DR-00001', date: '23.01.2026', shape: 'Round', carat: '1.05', color: 'D', clarity: 'IF', price: '12,500', status: 'active'},
-                            {id: 'DR-00002', date: '22.01.2026', shape: 'Princess', carat: '0.90', color: 'G', clarity: 'VS1', price: '4,200', status: 'sold'},
-                            {id: 'DR-00003', date: '21.01.2026', shape: 'Oval', carat: '2.10', color: 'E', clarity: 'VVS1', price: '28,000', status: 'active'},
-                            {id: 'DR-00004', date: '20.01.2026', shape: 'Emerald', carat: '1.50', color: 'H', clarity: 'SI1', price: '5,800', status: 'active'},
-                            {id: 'DR-00005', date: '19.01.2026', shape: 'Round', carat: '0.50', color: 'F', clarity: 'VS2', price: '1,900', status: 'sold'},
-                            {id: 'DR-00006', date: '18.01.2026', shape: 'Marquise', carat: '1.20', color: 'I', clarity: 'SI2', price: '3,100', status: 'active'},
-                            {id: 'DR-00007', date: '17.01.2026', shape: 'Pear', carat: '3.01', color: 'D', clarity: 'FL', price: '95,000', status: 'active'},
-                            {id: 'DR-00008', date: '16.01.2026', shape: 'Cushion', carat: '1.01', color: 'E', clarity: 'VVS2', price: '8,400', status: 'sold'}
+                            {id: 'DR-00001', date: '23.01.2026', shape: 'Round', carat: '1.05', color: 'D', clarity: 'IF', cut: 'Ex', price: '12,500', status: 'active'},
+                            {id: 'DR-00002', date: '22.01.2026', shape: 'Princess', carat: '0.90', color: 'G', clarity: 'VS1', cut: 'VG', price: '4,200', status: 'sold'},
+                            {id: 'DR-00003', date: '21.01.2026', shape: 'Oval', carat: '2.10', color: 'E', clarity: 'VVS1', cut: 'Ex', price: '28,000', status: 'active'},
+                            {id: 'DR-00004', date: '20.01.2026', shape: 'Emerald', carat: '1.50', color: 'H', clarity: 'SI1', cut: 'G', price: '5,800', status: 'active'},
+                            {id: 'DR-00005', date: '19.01.2026', shape: 'Round', carat: '0.50', color: 'F', clarity: 'VS2', cut: 'VG', price: '1,900', status: 'sold'},
+                            {id: 'DR-00006', date: '18.01.2026', shape: 'Marquise', carat: '1.20', color: 'I', clarity: 'SI2', cut: 'G', price: '3,100', status: 'active'},
+                            {id: 'DR-00007', date: '17.01.2026', shape: 'Pear', carat: '3.01', color: 'D', clarity: 'FL', cut: 'Ex', price: '95,000', status: 'active'},
+                            {id: 'DR-00008', date: '16.01.2026', shape: 'Cushion', carat: '1.01', color: 'E', clarity: 'VVS2', cut: 'VG', price: '8,400', status: 'sold'}
                         ]
 
                     each item in reports
@@ -141,6 +142,17 @@ block content
                             td.fw-bold= item.carat
                             td= item.color
                             td= item.clarity
+                            
+                            //- Відображення Cut
+                            td
+                                if item.cut === 'Ex'
+                                    span.status-badge.active Ex
+                                else if item.cut === 'VG'
+                                    //- Фіолетовий стиль для Very Good (інлайн для швидкості)
+                                    span.status-badge(style="background:#f3e8ff; color:#6b21a8") VG
+                                else
+                                    span.status-badge.sold= item.cut
+
                             td $#{item.price}
                             td
                                 if item.status === 'active'
