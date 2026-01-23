@@ -90,8 +90,18 @@ block content
                             input.form-control(type="number" placeholder="Min")
                             span -
                             input.form-control(type="number" placeholder="Max")
+                    
+                    //- 6. Cut Grade
+                    .filter-item
+                        label Якість (Cut)
+                        select.form-select
+                            option(value="") Будь-яка
+                            option(value="Excellent") Excellent
+                            option(value="Very Good") Very Good
+                            option(value="Good") Good
+                            option(value="Fair") Fair
 
-                    //- 6. Date (клас span-2)
+                    //- 7. Date (клас span-2)
                     .filter-item.span-2
                         label Дата створення
                         .range-inputs

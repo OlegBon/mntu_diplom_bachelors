@@ -722,7 +722,7 @@ ul {
         padding: 0.6rem;
         border: 1px solid $border-color;
         border-radius: 6px;
-        background: $white;
+        background-color: $white;
         color: $text-color;
         cursor: pointer;
         &:focus {
@@ -1351,4 +1351,26 @@ ul {
       order: 1; // Десктоп: Зліва (перший)
     }
   }
+}
+
+// Глобальний стиль для всіх селектів
+.form-select {
+  // Вимикаємо стандартну стрілку браузера
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+
+  // Малюємо свою стрілку (векторний код)
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+
+  // Параметри відображення
+  background-repeat: no-repeat;
+  background-size: 16px 12px; // Розмір самої стрілки
+
+  // Позиція стрілки
+  // right 1rem center -> Означає: "Справа відступити 1rem (16px), по вертикалі - центр"
+  background-position: right 1rem center;
+
+  // Внутрішній відступ тексту, щоб він не наїхав на стрілку
+  padding-right: 2.5rem !important;
 }
