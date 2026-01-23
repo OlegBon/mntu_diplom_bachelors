@@ -335,7 +335,8 @@ ul {
 .hero-section {
   text-align: center;
   padding: 4rem 1rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  // background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  background: $bg-linear-gradient;
   border-radius: 12px;
   margin-bottom: 3rem;
 
@@ -443,7 +444,8 @@ ul {
 
   .feature-card,
   .feature-icon-card {
-    background: $white;
+    // background: $white;
+    background: $bg-linear-gradient;
     padding: 2rem;
     border-radius: 12px;
     border: 1px solid $border-color;
