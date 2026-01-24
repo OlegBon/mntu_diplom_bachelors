@@ -32,9 +32,11 @@ block content
                         option(value="active") В продажу (Active)
                         option(value="sold") Продано (Sold)
                     
-                    select.form-select
+                    select.form-select(name="sort")
                         option(value="newest") Спочатку нові
+                        option(value="oldest") Спочатку старі
                         option(value="expensive") Спочатку дорогі
+                        option(value="cheapest") Спочатку дешеві
                     
                     select.form-select
                         option(value="all_users") Всі експерти

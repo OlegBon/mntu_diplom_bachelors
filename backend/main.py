@@ -184,10 +184,25 @@ def create_report(
     
     return crud.create_diamond_report(db=db, diamond=diamond_data, expert_id=current_user.expert_id)
 
-# Список усіх діамантів (з пагінацією)
+# Список усіх діамантів (з фільтрацією, сортуванням, пошуком)
 @app.get("/diamonds/", response_model=List[schemas.DiamondReportSchema])
-def read_diamonds(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
-    return crud.get_diamonds(db, skip=skip, limit=limit)
+def read_reports(
+    skip: int = 0, 
+    limit: int = 50,
+    status: Optional[str] = "all",
+    sort_by: Optional[str] = "newest",
+    search: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    reports = crud.get_reports(
+        db, 
+        skip=skip, 
+        limit=limit, 
+        status=status, 
+        sort_by=sort_by, 
+        search=search
+    )
+    return reports
 
 # Оновлення звіту (доступно авторизованим)
 @app.put("/diamonds/{report_id}", response_model=schemas.DiamondReportSchema)

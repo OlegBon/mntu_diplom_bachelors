@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import desc, asc
 from datetime import date
 import random
 
@@ -61,6 +62,47 @@ def delete_user(db: Session, expert_id: int):
 # Отримати тільки гемологів (фільтр по ролі - /experts/)
 def get_active_experts(db: Session):
     return db.query(models.Expert).filter(models.Expert.role != 'admin').all()
+
+# Отримати звіти з фільтрацією, сортуванням і пагінацією
+def get_reports(
+    db: Session, 
+    skip: int = 0, 
+    limit: int = 50,
+    status: str = "all",
+    sort_by: str = "newest",
+    search: str = None
+):
+    query = db.query(models.DiamondReport)
+
+    # 1. Фільтр по Статусу
+    if status == "active":
+        query = query.filter(models.DiamondReport.is_sold == False)
+    elif status == "sold":
+        query = query.filter(models.DiamondReport.is_sold == True)
+    
+    # 2. Пошук (по ID)
+    if search:
+        query = query.filter(models.DiamondReport.report_id.like(f"%{search}%"))
+
+    # 3. Сортування
+    if sort_by == "newest":
+        # Спочатку свіжа дата, якщо дати однакові — більший ID
+        query = query.order_by(desc(models.DiamondReport.report_date), desc(models.DiamondReport.report_id))
+    elif sort_by == "oldest":
+        # Спочатку старі, потім менші ID
+        query = query.order_by(asc(models.DiamondReport.report_date), asc(models.DiamondReport.report_id))
+    elif sort_by == "expensive":
+        query = query.order_by(desc(models.DiamondReport.price))
+    elif sort_by == "cheapest":
+        query = query.order_by(asc(models.DiamondReport.price))
+    else:
+        # Дефолтний стан (страховка) — просто останні додані по ID
+        query = query.order_by(desc(models.DiamondReport.report_id))
+    
+    # Сортування за замовчуванням (щоб порядок не стрибав)
+    query = query.order_by(desc(models.DiamondReport.report_id))
+
+    return query.offset(skip).limit(limit).all()
 
 # Отримати звіт по ID
 def get_diamond_report(db: Session, report_id: str):

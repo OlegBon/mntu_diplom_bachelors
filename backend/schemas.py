@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date, datetime
+from datetime import datetime, datetime
 
 # Схема для створення юзера (з паролем)
 class UserCreate(BaseModel):
@@ -30,21 +30,38 @@ class ExpertBase(BaseModel):
 
 # Схема для створення нового звіту (те, що вводить експерт)
 class DiamondCreate(BaseModel):
-    # Фізичні виміри (обов'язкові)
+    # --- Ідентифікація ---
+    shape: str  # Обов'язкове
+    stone_origin: int # 0=Natural, 1=Lab
+
+    # --- 4C (Основні) ---
     carat_weight: float
+    color_grade: int
+    clarity_grade: int
+    
+    # --- Геометрія (Measurements) ---
+    measurements_length: float
+    measurements_width: float
+    measurements_depth: float
+
+    # --- Фізичні параметри (IDC Input) ---
     table_percent: float
     depth_percent: float
     crown_angle: float
     pavilion_angle: float
     
-    # Експертні оцінки (те, що бачить око)
-    color_grade: int
-    clarity_grade: int
+    # --- Деталі ---
+    girdle_thickness: Optional[str] = "Medium"
+    culet_size: Optional[str] = "None"
+
+    # --- Finish ---
     polish_grade: int
     symmetry_grade: int
     fluorescence_grade: int
-    stone_origin: int
 
+    # --- Extra ---
+    expert_comment: Optional[str] = None # Коментар експерта
+    
     # Поля, які ми або порахуємо, або візьмемо введені (необов'язкові)
     cut_grade: Optional[int] = None
     proportions_grade: Optional[int] = None
@@ -66,7 +83,7 @@ class ExpertStats(BaseModel):
 # Схема для діаманта (базові поля)
 class DiamondReportSchema(BaseModel):
     report_id: str
-    report_date: date
+    report_date: datetime
     carat_weight: float
     color_grade: int
     clarity_grade: int

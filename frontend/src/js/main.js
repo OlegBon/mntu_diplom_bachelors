@@ -1,6 +1,84 @@
 import { checkAuth, logout } from "./modules/auth.js";
 import { loginUser } from "./modules/api.js";
 
+// === КОНФІГУРАЦІЯ API ===
+const API_URL = "http://127.0.0.1:8000"; // Адреса твого Python сервера
+
+// === ЗМІННІ ДЛЯ DASHBOARD ===
+let currentPage = 1;
+const itemsPerPage = 50;
+
+// === MAPPINGS (Для перекладу кодів з бази в текст) ===
+const MAPPINGS = {
+  colors: [
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S-Z",
+    "Fancy",
+  ],
+  clarities: [
+    "FL",
+    "IF",
+    "VVS1",
+    "VVS2",
+    "VS1",
+    "VS2",
+    "SI1",
+    "SI2",
+    "I1",
+    "I2",
+    "I3",
+  ],
+  cuts: ["Excellent", "Very Good", "Good", "Fair", "Poor"],
+};
+
+// --- Helper для API запитів ---
+async function apiRequest(endpoint, method = "GET", data = null) {
+  const token = localStorage.getItem("token");
+  const headers = { "Content-Type": "application/json" };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const config = { method, headers };
+  if (data) config.body = JSON.stringify(data);
+
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, config);
+
+    if (response.status === 401) {
+      console.warn("Unauthorized or Token Expired");
+      // Тут можна додати редірект на логін, якщо треба
+      return null;
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "API Error");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`API Error (${endpoint}):`, error);
+    alert(`Помилка сервера: ${error.message}`);
+    return null;
+  }
+}
+
 // --- Redirect from /index.html to / ---
 if (window.location.pathname.endsWith("/index.html")) {
   window.history.replaceState({}, "", "/");
@@ -15,8 +93,6 @@ function updateHeaderUI(isAuthenticated) {
 
   if (isAuthenticated) {
     const username = localStorage.getItem("username") || "User";
-
-    // Mapping
     let displayName = username;
     let roleClass = "text-expert";
 
@@ -27,13 +103,11 @@ function updateHeaderUI(isAuthenticated) {
       displayName = "Bondarenko O.";
     }
 
-    // HTML для Dropdown
     authBlock.innerHTML = `
             <div class="user-trigger" id="user-trigger">
                 <span class="user-name ${roleClass}">${displayName}</span>
                 <span class="arrow-icon">▼</span>
             </div>
-            
             <div class="user-dropdown-menu" id="user-dropdown">
                 <a href="/profile.html">👤 Мій профіль</a>
                 <div class="divider"></div>
@@ -41,30 +115,27 @@ function updateHeaderUI(isAuthenticated) {
             </div>
         `;
 
-    // Логіка Dropdown (JS)
     const trigger = document.getElementById("user-trigger");
     const dropdown = document.getElementById("user-dropdown");
     const logoutBtn = document.getElementById("logout-btn");
 
-    // Toggle меню
-    trigger.addEventListener("click", (e) => {
-      e.stopPropagation(); // Щоб клік не пішов далі на document
-      dropdown.classList.toggle("is-visible");
-      trigger.classList.toggle("is-active");
-    });
+    if (trigger) {
+      trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle("is-visible");
+        trigger.classList.toggle("is-active");
+      });
+    }
 
-    // Logout
-    logoutBtn.addEventListener("click", logout);
+    if (logoutBtn) logoutBtn.addEventListener("click", logout);
 
-    // Закриття при кліку поза межами
     document.addEventListener("click", (e) => {
-      if (!authBlock.contains(e.target)) {
+      if (!authBlock.contains(e.target) && dropdown) {
         dropdown.classList.remove("is-visible");
         trigger.classList.remove("is-active");
       }
     });
 
-    // Меню Експерта (Навігація)
     if (navList && !document.getElementById("nav-dashboard")) {
       navList.innerHTML = `
                 <li id="nav-dashboard"><a href="/dashboard.html">Звіти</a></li>
@@ -73,59 +144,196 @@ function updateHeaderUI(isAuthenticated) {
              `;
     }
   } else {
-    // Гість
-    authBlock.innerHTML = `
-            <a class="btn btn-sm btn-primary" href="/login.html">Вхід</a>
-        `;
-
-    if (navList) {
-      navList.innerHTML = `
-                <li><a href="/">Головна</a></li>
-             `;
-    }
+    authBlock.innerHTML = `<a class="btn btn-sm btn-primary" href="/login.html">Вхід</a>`;
+    if (navList) navList.innerHTML = `<li><a href="/">Головна</a></li>`;
   }
 }
 
-// --- Оновлення року у футері ---
-function updateFooterYear() {
-  const yearSpan = document.getElementById("copyright-year");
-  if (yearSpan) {
-    const startYear = 2026;
-    const currentYear = new Date().getFullYear();
-    yearSpan.textContent =
-      currentYear > startYear ? `${startYear}-${currentYear}` : `${startYear}`;
+// === Функція завантаження Dashboard ===
+async function loadDashboard(page = 1) {
+  const dashboardTable = document.querySelector(".data-table tbody");
+  if (!dashboardTable) return;
+
+  // 1. Збираємо фільтри
+  // Шукаємо селекти всередині блоку .filters-bar
+  const statusFilter =
+    document.querySelector(".filters-bar select option:checked")?.parentElement
+      ?.value === "active"
+      ? "active"
+      : document.querySelector(".filters-bar select option:checked")
+            ?.parentElement?.value === "sold"
+        ? "sold"
+        : document.querySelector('select[name="status"]')?.value || "all";
+
+  // Щоб точно знайти правильні селекти, краще орієнтуватися по порядку або name, якщо він є
+  // Але спробуємо знайти їх через .filters-group select
+  const filters = document.querySelectorAll(".filters-group .form-select");
+  let statusVal = "all";
+  let sortVal = "newest";
+
+  if (filters.length >= 2) {
+    statusVal = filters[0].value; // Перший селект - статус
+    sortVal = filters[1].value; // Другий - сортування
   }
+
+  // Пошук
+  const searchInput = document.querySelector(".search-bar input");
+  const searchQuery = searchInput ? searchInput.value.trim() : "";
+
+  // 2. Параметри URL
+  const skip = (page - 1) * itemsPerPage;
+  const params = new URLSearchParams({
+    skip: skip,
+    limit: itemsPerPage,
+  });
+
+  if (statusVal !== "all") params.append("status", statusVal);
+  if (sortVal !== "newest") params.append("sort_by", sortVal);
+  if (searchQuery) params.append("search", searchQuery);
+
+  // 3. UI
+  dashboardTable.innerHTML =
+    '<tr><td colspan="10" class="text-center py-4">⏳ Завантаження даних...</td></tr>';
+
+  try {
+    // Запит до API на сервер
+    const reports = await apiRequest(`/diamonds/?${params.toString()}`);
+
+    dashboardTable.innerHTML = "";
+
+    if (!reports || reports.length === 0) {
+      dashboardTable.innerHTML =
+        '<tr><td colspan="10" class="text-center py-4">📭 Нічого не знайдено</td></tr>';
+      return;
+    }
+
+    renderTableRows(reports, dashboardTable);
+    currentPage = page;
+  } catch (error) {
+    console.error("Dashboard Load Error:", error);
+    dashboardTable.innerHTML =
+      '<tr><td colspan="10" class="text-center text-danger">❌ Помилка завантаження</td></tr>';
+  }
+}
+
+// === Рендеринг рядків таблиці ===
+function renderTableRows(reports, tableElement) {
+  reports.forEach((item) => {
+    // --- Дата та Час ---
+    const dateObj = new Date(item.report_date);
+    const dateStr = dateObj.toLocaleDateString("uk-UA", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    const timeStr = dateObj.toLocaleTimeString("uk-UA", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const dateCellHtml = `
+            <div style="line-height: 1.2;">
+                <div class="fw-bold" style="font-size: 0.9rem; color: #334155;">${dateStr}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">${timeStr}</div>
+            </div>
+        `;
+
+    // --- Мапінги ---
+    const shapeName = item.shape || "Round";
+    const colorName = MAPPINGS.colors[item.color_grade] || item.color_grade;
+    const clarityName =
+      MAPPINGS.clarities[item.clarity_grade] || item.clarity_grade;
+    const cutName = MAPPINGS.cuts[item.cut_grade] || "N/A";
+
+    // Badges
+    let cutBadge = `<span class="text-muted">${cutName.substring(0, 2)}</span>`;
+    if (item.cut_grade === 0)
+      cutBadge = `<span class="status-badge active">Ex</span>`;
+    else if (item.cut_grade === 1)
+      cutBadge = `<span class="status-badge" style="background:#f3e8ff; color:#6b21a8">VG</span>`;
+
+    const statusBadge = item.is_sold
+      ? `<span class="status-badge sold">Sold</span>`
+      : `<span class="status-badge active">Active</span>`;
+
+    const price = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(item.price);
+
+    // --- HTML Рядка ---
+    const row = `
+            <tr>
+                <td><a class="id-link" href="/view-report.html?id=${item.report_id}">${item.report_id}</a></td>
+                
+                <td>${dateCellHtml}</td>
+                
+                <td>${shapeName}</td> 
+                <td class="fw-bold">${item.carat_weight}</td>
+                <td>${colorName}</td>
+                <td>${clarityName}</td>
+                <td>${cutBadge}</td>
+                <td>${price}</td>
+                <td>${statusBadge}</td>
+                
+                <td>
+                    <div class="actions" style="display: flex; gap: 0.5rem; min-width: 100px;">
+                        <button class="btn-icon" title="Редагувати">✏️</button>
+                        <button class="btn-icon" title="Друк">🖨️</button>
+                        <a href="/view-report.html?id=${item.report_id}" class="btn-icon" title="Перегляд">👁️</a>
+                    </div>
+                </td>
+            </tr>
+        `;
+    tableElement.insertAdjacentHTML("beforeend", row);
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   const isAuthenticated = checkAuth();
   updateHeaderUI(isAuthenticated);
 
-  // Мобільне меню (Burger)
+  // === DASHBOARD INITIALIZATION ===
+  if (isAuthenticated && document.querySelector(".data-table")) {
+    // 1. Завантажуємо дані
+    loadDashboard(1);
+
+    // 2. Обробка зміни фільтрів
+    const filtersGroup = document.querySelector(".filters-group");
+    if (filtersGroup) {
+      filtersGroup.addEventListener("change", (e) => {
+        if (e.target.tagName === "SELECT") {
+          loadDashboard(1); // Перезавантаження при зміні Select
+        }
+      });
+    }
+
+    // 3. Обробка пошуку
+    const searchInput = document.querySelector(".search-bar input");
+    const searchBtn = document.querySelector(".search-bar button");
+
+    if (searchBtn && searchInput) {
+      searchBtn.addEventListener("click", () => loadDashboard(1));
+      searchInput.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") loadDashboard(1);
+      });
+    }
+  }
+
+  // --- Mobile Menu ---
   const burgerBtn = document.getElementById("burger-btn");
   const mainNav = document.getElementById("main-nav");
-
   if (burgerBtn && mainNav) {
     burgerBtn.addEventListener("click", () => {
       burgerBtn.classList.toggle("is-active");
       mainNav.classList.toggle("is-active");
     });
-
-    // Закривати меню при кліку на посилання (UX)
-    mainNav.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => {
-        burgerBtn.classList.remove("is-active");
-        mainNav.classList.remove("is-active");
-      });
-    });
   }
 
-  // --- Логіка для сторінки логіну ---
+  // --- Login Page Logic ---
   if (window.location.pathname.includes("login.html")) {
-    // Якщо вже авторизовані -> на Головну (root)
-    if (isAuthenticated) {
-      window.location.href = "/";
-    }
+    if (isAuthenticated) window.location.href = "/";
 
     const loginForm = document.getElementById("login-form");
     if (loginForm) {
@@ -137,11 +345,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
           const token = await loginUser(username, password);
-
           localStorage.setItem("token", token);
           localStorage.setItem("username", username);
-
-          // Редірект на корінь
           window.location.href = "/";
         } catch (err) {
           errorMsg.textContent = "Помилка: " + err.message;
@@ -151,73 +356,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Логіка пошуку на Головній
+  // --- Public Search (Landing) ---
   const searchForm = document.getElementById("public-search-form");
   if (searchForm) {
     searchForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const query = document.getElementById("search-input").value.trim();
-
-      if (query) {
-        // Перенаправляємо на сторінку перегляду (з параметром ?id=...)
-        // Поки що сторінки view-report.html немає, але посилання буде правильним
+      if (query)
         window.location.href = `/view-report.html?id=${encodeURIComponent(query)}`;
-      }
     });
   }
 
   // --- Advanced Filters Toggle ---
   const toggleFiltersBtn = document.getElementById("toggle-filters");
   const advancedFiltersPanel = document.getElementById("advanced-filters");
-
   if (toggleFiltersBtn && advancedFiltersPanel) {
     toggleFiltersBtn.addEventListener("click", () => {
-      // Перемикаємо клас видимості
       advancedFiltersPanel.classList.toggle("is-visible");
-
-      // Змінюємо стиль кнопки (активна/неактивна)
       toggleFiltersBtn.classList.toggle("btn-primary");
       toggleFiltersBtn.classList.toggle("btn-outline");
     });
   }
 
-  // --- Dashboard Search (натискання Enter) ---
-  // Шукаємо інпут всередині .search-group на сторінці дашборду
-  const dashboardSearchInput = document.querySelector(
-    ".filters-bar .search-group input",
-  );
-
-  if (dashboardSearchInput) {
-    dashboardSearchInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault(); // Щоб форма не сабмітилась, якщо вона є
-        const query = dashboardSearchInput.value.trim();
-
-        if (query) {
-          console.log(`🔎 Шукаємо звіт: ${query}`);
-          // Тут пізніше буде виклик API: fetchReports({ search: query })
-          alert(`Виконання пошуку для: ${query}`); // Тимчасова заглушка
-        }
-      }
-    });
-  }
-
-  // --- Create Report Wizard Logic ---
+  // --- Create Report Wizard Logic (KEEP EXISTING) ---
   const wizardForm = document.getElementById("wizard-form");
   if (wizardForm) {
-    // 1. Ініціалізація дати та таймера
     const dateInput = document.getElementById("input-date");
-    if (dateInput) {
-      dateInput.valueAsDate = new Date(); // Сьогоднішня дата
-    }
+    if (dateInput) dateInput.valueAsDate = new Date();
 
-    // Фіксуємо час початку (для статистики)
-    const startTimeInput = document.getElementById("start-time");
-    if (startTimeInput) {
-      startTimeInput.value = Date.now();
-    }
-
-    // 2. Логіка перемикання кроків
     const tabs = document.querySelectorAll(".stepper-tabs .tab");
     const steps = document.querySelectorAll(".step-content");
     const nextBtn = document.getElementById("next-btn");
@@ -228,111 +394,123 @@ document.addEventListener("DOMContentLoaded", () => {
     const totalSteps = steps.length;
 
     function updateUI() {
-      // Перемикаємо контент
       steps.forEach((step) => {
         step.classList.remove("active");
         if (parseInt(step.dataset.step) === currentStep)
           step.classList.add("active");
       });
-
-      // Перемикаємо таби
       tabs.forEach((tab) => {
         const stepNum = parseInt(tab.dataset.step);
         tab.classList.toggle("active", stepNum === currentStep);
       });
-
-      // Кнопки
-      prevBtn.disabled = currentStep === 1;
+      if (prevBtn) prevBtn.disabled = currentStep === 1;
       if (currentStep === totalSteps) {
-        nextBtn.style.display = "none";
-        saveBtn.style.display = "inline-block";
+        if (nextBtn) nextBtn.style.display = "none";
+        if (saveBtn) saveBtn.style.display = "inline-block";
       } else {
-        nextBtn.style.display = "inline-block";
-        saveBtn.style.display = "none";
+        if (nextBtn) nextBtn.style.display = "inline-block";
+        if (saveBtn) saveBtn.style.display = "none";
       }
     }
 
-    nextBtn.addEventListener("click", () => {
-      if (currentStep < totalSteps) {
-        // Можна додати валідацію тут: if(!validateStep(currentStep)) return;
-        currentStep++;
-        updateUI();
-        // Скрол вгору форми
-        window.scrollTo({ top: 100, behavior: "smooth" });
-      }
-    });
-
-    prevBtn.addEventListener("click", () => {
-      if (currentStep > 1) {
-        currentStep--;
-        updateUI();
-      }
-    });
-
-    // Клік по табах (опціонально, якщо хочемо дозволити стрибати)
-    /*
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                currentStep = parseInt(tab.dataset.step);
-                updateUI();
-            });
-        });
-        */
-
-    // --- Авто-скрол до активного табу ---
-    // Знаходимо активний таб
-    const activeTab = document.querySelector(".stepper-tabs .tab.active");
-    if (activeTab) {
-      // Прокрути так, щоб елемент став по центру (для браузерів, що підтримують smooth scroll)
-      activeTab.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-        block: "nearest",
+    if (nextBtn)
+      nextBtn.addEventListener("click", () => {
+        if (currentStep < totalSteps) {
+          currentStep++;
+          updateUI();
+          window.scrollTo({ top: 100, behavior: "smooth" });
+        }
       });
-    }
 
-    // Обробка форми (Submit)
-    wizardForm.addEventListener("submit", (e) => {
+    if (prevBtn)
+      prevBtn.addEventListener("click", () => {
+        if (currentStep > 1) {
+          currentStep--;
+          updateUI();
+        }
+      });
+
+    // --- API: Create Report ---
+    wizardForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      alert(
-        "Функціонал збереження в базу буде підключено на наступному етапі (API Integration).",
-      );
-      // Тут буде fetch('/api/reports', ...)
+
+      const btn = document.getElementById("save-btn");
+      const originalText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = "⏳ Збереження...";
+
+      const formData = new FormData(wizardForm);
+
+      const payload = {
+        shape: "Round", // Хардкод поки що, бо немає селекта в візарді
+        stone_origin: parseInt(formData.get("stone_origin") || 0),
+        carat_weight: parseFloat(formData.get("carat_weight") || 0),
+        color_grade: parseInt(formData.get("color_grade") || 0),
+        clarity_grade: parseInt(formData.get("clarity_grade") || 0),
+        measurements_length: parseFloat(
+          formData.get("measurements_length") || 0,
+        ),
+        measurements_width: parseFloat(formData.get("measurements_width") || 0),
+        measurements_depth: parseFloat(formData.get("measurements_depth") || 0),
+        table_percent: parseFloat(formData.get("table_percent") || 0),
+        depth_percent: parseFloat(formData.get("depth_percent") || 0),
+        crown_angle: parseFloat(formData.get("crown_angle") || 0),
+        pavilion_angle: parseFloat(formData.get("pavilion_angle") || 0),
+        girdle_thickness: formData.get("girdle_thickness"),
+        culet_size: formData.get("culet_size"),
+        polish_grade: parseInt(formData.get("polish_grade") || 0),
+        symmetry_grade: parseInt(formData.get("symmetry_grade") || 0),
+        fluorescence_grade: parseInt(formData.get("fluorescence_grade") || 0),
+        expert_comment: formData.get("expert_comment"),
+        cut_grade: parseInt(
+          document.getElementById("calc-cut-grade")?.value || 3,
+        ),
+        proportions_grade: parseInt(
+          document.getElementById("calc-proportions-grade")?.value || 3,
+        ),
+        price:
+          parseFloat(
+            (document.getElementById("calc-price")?.value || "0").replace(
+              /[^0-9.]/g,
+              "",
+            ),
+          ) || 0,
+      };
+
+      const result = await apiRequest("/diamonds/", "POST", payload);
+
+      if (result) {
+        alert(`✅ Звіт ${result.report_id} успішно створено!`);
+        window.location.href = "/dashboard.html";
+      } else {
+        btn.disabled = false;
+        btn.innerText = originalText;
+      }
     });
   }
 
-  // --- Live Calculator Logic (IDC & Price Mock) ---
-  // Слухаємо зміни у всій формі, щоб ловити і Step 2, і Step 3
+  // --- Live Calculator Logic (Full) ---
   const calcInputs = document.querySelectorAll(
     "#wizard-form input, #wizard-form select",
   );
-
-  // Елементи результату (Права колонка)
   const resProp = document.getElementById("res-prop");
-  const resPol = document.getElementById("res-pol"); // НОВЕ
+  const resPol = document.getElementById("res-pol");
   const resSym = document.getElementById("res-sym");
   const resFinal = document.getElementById("res-final");
   const resPrice = document.getElementById("res-price");
-
-  // Приховані поля (для збереження в БД)
   const hiddenCut = document.getElementById("calc-cut-grade");
   const hiddenProp = document.getElementById("calc-proportions-grade");
   const hiddenPrice = document.getElementById("calc-price");
 
   if (calcInputs.length > 0) {
     calcInputs.forEach((input) => {
-      // Використовуємо і input, і change для надійності (особливо для select)
       input.addEventListener("input", updateCalculator);
       input.addEventListener("change", updateCalculator);
     });
-
-    // Запускаємо один раз при старті, щоб заповнити нулями/дефолтами
     updateCalculator();
   }
 
   function updateCalculator() {
-    // --- 1. Збір даних ---
-    // Step 2: Dimensions & Angles
     const table =
       parseFloat(
         document.querySelector('input[name="table_percent"]')?.value,
@@ -351,22 +529,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const carat =
       parseFloat(document.querySelector('input[name="carat_weight"]')?.value) ||
       0;
-
-    // Step 3: Finish (Polish / Symmetry)
-    // value="0" -> Excellent, "1" -> VG...
     const polInput = document.querySelector('select[name="polish_grade"]');
     const symInput = document.querySelector('select[name="symmetry_grade"]');
-
     const polVal = polInput ? parseInt(polInput.value) : 0;
     const symVal = symInput ? parseInt(symInput.value) : 0;
 
-    // --- 2. Логіка Proportions (Більш точна імітація IDC) ---
-    // 0=Ex, 1=VG, 2=G, 3=Fair
-    let propScore = 3; // За замовчуванням Fair (поки не введеш нормальні дані)
-
-    // Перевіряємо, чи взагалі введені дані
+    let propScore = 3;
     if (table > 0 && depth > 0 && crown > 0 && pav > 0) {
-      // Excellent range (Приблизний стандарт Round Brilliant)
       const isEx =
         table >= 56 &&
         table <= 61 &&
@@ -376,8 +545,6 @@ document.addEventListener("DOMContentLoaded", () => {
         crown <= 35.0 &&
         pav >= 40.6 &&
         pav <= 41.0;
-
-      // Very Good range
       const isVG =
         table >= 53 &&
         table <= 63 &&
@@ -387,84 +554,52 @@ document.addEventListener("DOMContentLoaded", () => {
         crown <= 36.0 &&
         pav >= 40.2 &&
         pav <= 41.8;
-
-      // Good range
       const isGood = table >= 51 && table <= 66 && depth >= 56 && depth <= 65;
-
       if (isEx) propScore = 0;
       else if (isVG) propScore = 1;
       else if (isGood) propScore = 2;
-      else propScore = 3; // Fair/Poor
+      else propScore = 3;
     } else {
-      // Якщо дані не введені або неповні - ставимо прочерк в логіці
       propScore = -1;
     }
 
-    // --- 3. Відображення (Properties, Polish, Symmetry) ---
     const grades = ["Excellent", "Very Good", "Good", "Fair"];
-
-    // Helper для тексту
     const getLabel = (score) =>
       score >= 0 && score < grades.length ? grades[score] : "--";
 
     if (resProp) {
       resProp.textContent = getLabel(propScore);
-      // Якщо score = -1 (дані не введені), показуємо сірий "--"
       resProp.classList.toggle("placeholder", propScore === -1);
     }
-
     if (resPol) resPol.textContent = getLabel(polVal);
     if (resSym) resSym.textContent = getLabel(symVal);
 
-    // --- 4. Final Cut Grade (Rule: Worst Grade Wins) ---
-    // Тобто MAX з чисел (бо 3 це гірше ніж 0)
-
-    let finalScore = 3; // Default Fair
-
-    if (propScore !== -1) {
-      // Якщо пропорції пораховані, беремо максимум серед трьох
-      finalScore = Math.max(propScore, polVal, symVal);
-    } else {
-      // Якщо пропорції ще не введені, фінальна оцінка недоступна
-      finalScore = -1;
-    }
+    let finalScore = 3;
+    if (propScore !== -1) finalScore = Math.max(propScore, polVal, symVal);
+    else finalScore = -1;
 
     if (resFinal) {
       resFinal.textContent = getLabel(finalScore);
-      resFinal.className = "calc-value"; // Скидаємо класи
-      if (finalScore === 0) resFinal.classList.add("price"); // Зелений якщо Ex
+      resFinal.className = "calc-value";
+      if (finalScore === 0) resFinal.classList.add("price");
       if (finalScore === -1) resFinal.classList.add("placeholder");
-
-      // Запис в hidden inputs для БД
       if (hiddenCut) hiddenCut.value = finalScore === -1 ? 3 : finalScore;
       if (hiddenProp) hiddenProp.value = propScore === -1 ? 3 : propScore;
     }
 
-    // --- 5. Marcet Valution ---
-    // Рахуємо ціну, якщо є хоча б вага (Carat)
     if (carat > 0) {
-      let basePrice = 6000; // Це число ми потім візьмемо з бази (API)
-      let multiplier = 1.0; // Базовий множник
-
-      // Якщо Cut Grade вже відомий - застосовуємо уточнення
+      let basePrice = 6000;
+      let multiplier = 1.0;
       if (finalScore !== -1) {
-        if (finalScore === 0)
-          multiplier = 1.15; // Ex +15%
-        else if (finalScore === 1)
-          multiplier = 1.05; // VG +5%
-        else if (finalScore === 2)
-          multiplier = 0.9; // G -10%
-        else multiplier = 0.8; // Fair -20%
+        if (finalScore === 0) multiplier = 1.15;
+        else if (finalScore === 1) multiplier = 1.05;
+        else if (finalScore === 2) multiplier = 0.9;
+        else multiplier = 0.8;
       } else {
-        // Якщо оцінки ще немає, припускаємо, що це "Good" (середній камінь)
-        // щоб ціна не стрибала від 0 до мільйона
         multiplier = 0.95;
       }
 
-      // В майбутньому тут будуть множники для Color/Clarity з API
-
       const finalPrice = Math.round(carat * basePrice * multiplier);
-
       const priceFormatted = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
@@ -474,10 +609,8 @@ document.addEventListener("DOMContentLoaded", () => {
         resPrice.textContent = priceFormatted;
         resPrice.classList.remove("placeholder");
       }
-      // Записуємо в приховане поле, щоб відправити на сервер
       if (hiddenPrice) hiddenPrice.value = finalPrice;
     } else {
-      // Якщо ваги немає - показуємо прочерки
       if (resPrice) {
         resPrice.textContent = "$ --,--";
         resPrice.classList.add("placeholder");

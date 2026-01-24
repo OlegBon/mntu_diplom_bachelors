@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DECIMAL, Date, ForeignKey, Enum, TIMESTAMP, Boolean, UniqueConstraint, Text
+from sqlalchemy import Column, DateTime, Integer, String, DECIMAL, ForeignKey, Enum, TIMESTAMP, Boolean, UniqueConstraint, Text
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -20,7 +20,7 @@ class DiamondReport(Base):
     __table_args__ = {"schema": "diamond_oltp"}
 
     report_id = Column(String(20), primary_key=True, index=True)
-    report_date = Column(Date, nullable=False)
+    report_date = Column(DateTime, nullable=False)
     
     # --- Форма (Обов'язкове поле) ---
     shape = Column(String(50), nullable=False) 
@@ -71,7 +71,7 @@ class DiamondReport(Base):
     is_report_rejected = Column(Boolean, default=False)
     is_sold = Column(Boolean, default=False)
     days_on_market = Column(Integer, nullable=True)
-    sale_date = Column(Date, nullable=True)
+    sale_date = Column(DateTime, nullable=True)
 
 class GradeMapping(Base):
     __tablename__ = "grade_mappings"
