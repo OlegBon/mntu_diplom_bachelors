@@ -1,4 +1,4 @@
-@import "variables";
+@use "variables";
 
 // --- Reset & Base ---
 * {
@@ -8,9 +8,9 @@
 }
 
 body {
-  font-family: $font-main;
-  background-color: $bg-color;
-  color: $text-color;
+  font-family: variables.$font-main;
+  background-color: variables.$bg-color;
+  color: variables.$text-color;
   line-height: 1.5;
   display: flex;
   flex-direction: column;
@@ -30,7 +30,7 @@ ul {
 // --- Layout Utilities ---
 .container {
   width: 100%;
-  max-width: $container-width;
+  max-width: variables.$container-width;
   margin: 0 auto;
   padding: 0 1rem;
 }
@@ -52,20 +52,20 @@ ul {
   font-size: 0.9rem;
 
   &.btn-primary {
-    background-color: $primary-color;
-    color: $white;
+    background-color: variables.$primary-color;
+    color: variables.$white;
     &:hover {
-      background-color: $primary-hover;
+      background-color: variables.$primary-hover;
     }
   }
 
   &.btn-outline {
-    border-color: $primary-color;
-    color: $primary-color;
+    border-color: variables.$primary-color;
+    color: variables.$primary-color;
     background: transparent;
     &:hover {
-      background-color: $primary-color;
-      color: $white;
+      background-color: variables.$primary-color;
+      color: variables.$white;
     }
   }
 
@@ -77,13 +77,13 @@ ul {
 
 // --- Header ---
 .main-header {
-  background-color: $white;
-  border-bottom: 1px solid $border-color;
+  background-color: variables.$white;
+  border-bottom: 1px solid variables.$border-color;
   padding: 0.8rem 0;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: $shadow-sm;
+  box-shadow: variables.$shadow-sm;
 
   .header-content {
     display: flex;
@@ -105,7 +105,7 @@ ul {
     gap: 0.5rem;
     font-weight: 700;
     font-size: 1.25rem;
-    color: $text-color;
+    color: variables.$text-color;
     z-index: 101;
 
     .logo-icon {
@@ -136,7 +136,7 @@ ul {
       display: block;
       width: 24px;
       height: 2px;
-      background-color: $text-color;
+      background-color: variables.$text-color;
       transition: all 0.3s;
     }
 
@@ -164,10 +164,10 @@ ul {
     top: 100%;
     left: 0;
     width: 100%;
-    background-color: $white;
-    border-bottom: 1px solid $border-color;
+    background-color: variables.$white;
+    border-bottom: 1px solid variables.$border-color;
     padding: 1rem 0;
-    box-shadow: $shadow-md;
+    box-shadow: variables.$shadow-md;
     display: none;
 
     &.is-active {
@@ -185,10 +185,10 @@ ul {
         display: block;
         padding: 0.5rem;
         font-size: 1.1rem;
-        color: $secondary-color;
+        color: variables.$secondary-color;
         font-weight: 500;
         &:hover {
-          color: $primary-color;
+          color: variables.$primary-color;
         }
       }
     }
@@ -240,13 +240,13 @@ ul {
           color: #dc2626;
         }
         &.text-expert {
-          color: $primary-color;
+          color: variables.$primary-color;
         }
       }
 
       .arrow-icon {
         font-size: 0.7rem;
-        color: $secondary-color;
+        color: variables.$secondary-color;
         transition: transform 0.2s;
       }
 
@@ -262,10 +262,10 @@ ul {
       top: 100%; // Одразу під блоком
       right: 0; // Рівняємо по правому краю
       margin-top: 0.5rem;
-      background: $white;
-      border: 1px solid $border-color;
+      background: variables.$white;
+      border: 1px solid variables.$border-color;
       border-radius: 8px;
-      box-shadow: $shadow-md;
+      box-shadow: variables.$shadow-md;
       width: 180px;
 
       // Ховаємо за замовчуванням
@@ -289,21 +289,21 @@ ul {
         border: none;
         cursor: pointer;
         font-size: 0.9rem;
-        color: $text-color;
+        color: variables.$text-color;
         text-decoration: none;
         transition: background 0.2s;
-        font-family: $font-main; // Спадкування шрифту
+        font-family: variables.$font-main; // Спадкування шрифту
 
         &:hover {
           background-color: #f8fafc;
-          color: $primary-color;
+          color: variables.$primary-color;
         }
       }
 
       // Роздільник перед "Виходом"
       .divider {
         height: 1px;
-        background-color: $border-color;
+        background-color: variables.$border-color;
         margin: 0;
       }
 
@@ -336,14 +336,14 @@ ul {
   text-align: center;
   padding: 4rem 1rem;
   // background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
-  background: $bg-linear-gradient;
+  background: variables.$bg-linear-gradient;
   border-radius: 12px;
   margin-bottom: 3rem;
 
   .hero-badge {
     display: inline-block;
     background: #e0f2fe;
-    color: $primary-color;
+    color: variables.$primary-color;
     padding: 0.3rem 0.8rem;
     border-radius: 20px;
     font-size: 0.85rem;
@@ -358,7 +358,7 @@ ul {
     font-weight: 800;
     margin-bottom: 1rem;
     line-height: 1.2;
-    color: $text-color;
+    color: variables.$text-color;
 
     @media (min-width: 768px) {
       font-size: 3rem;
@@ -367,7 +367,7 @@ ul {
 
   .hero-subtitle {
     font-size: 1.1rem;
-    color: $secondary-color;
+    color: variables.$secondary-color;
     margin-bottom: 2.5rem;
     line-height: 1.6;
   }
@@ -378,11 +378,11 @@ ul {
     margin: 0 auto;
     display: flex;
     gap: 0.5rem;
-    background: $white;
+    background: variables.$white;
     padding: 0.5rem;
     border-radius: 8px;
-    box-shadow: $shadow-md;
-    border: 1px solid $border-color;
+    box-shadow: variables.$shadow-md;
+    border: 1px solid variables.$border-color;
 
     // Мобільний вигляд (Стовпчик)
     @media (max-width: 600px) {
@@ -407,7 +407,7 @@ ul {
       padding: 0.8rem;
       font-size: 1rem;
       outline: none;
-      font-family: $font-main;
+      font-family: variables.$font-main;
       min-width: 0;
     }
 
@@ -429,7 +429,7 @@ ul {
     font-size: 1.8rem;
     font-weight: 700;
     margin-bottom: 2rem;
-    color: $text-color;
+    color: variables.$text-color;
   }
 
   .features-grid {
@@ -444,11 +444,11 @@ ul {
 
   .feature-card,
   .feature-icon-card {
-    // background: $white;
-    background: $bg-linear-gradient;
+    // background: variables.$white;
+    background: variables.$bg-linear-gradient;
     padding: 2rem;
     border-radius: 12px;
-    border: 1px solid $border-color;
+    border: 1px solid variables.$border-color;
     text-align: center;
     transition:
       transform 0.2s,
@@ -456,8 +456,8 @@ ul {
 
     &:hover {
       transform: translateY(-5px);
-      box-shadow: $shadow-md;
-      border-color: rgba($primary-color, 0.3);
+      box-shadow: variables.$shadow-md;
+      border-color: rgba(variables.$primary-color, 0.3);
     }
 
     .feature-icon {
@@ -468,11 +468,11 @@ ul {
     h3 {
       font-size: 1.25rem;
       margin-bottom: 0.5rem;
-      color: $text-color;
+      color: variables.$text-color;
     }
 
     p {
-      color: $secondary-color;
+      color: variables.$secondary-color;
       font-size: 0.95rem;
       line-height: 1.5;
     }
@@ -490,11 +490,11 @@ ul {
     h2 {
       font-size: 1.8rem;
       font-weight: 700;
-      color: $text-color;
+      color: variables.$text-color;
       margin-bottom: 0.5rem;
     }
     p {
-      color: $secondary-color;
+      color: variables.$secondary-color;
     }
   }
 
@@ -505,8 +505,8 @@ ul {
   }
 
   .diamond-card {
-    background: $white;
-    border: 1px solid $border-color;
+    background: variables.$white;
+    border: 1px solid variables.$border-color;
     border-radius: 12px;
     overflow: hidden;
     transition:
@@ -517,8 +517,8 @@ ul {
 
     &:hover {
       transform: translateY(-5px);
-      box-shadow: $shadow-md;
-      border-color: $primary-color;
+      box-shadow: variables.$shadow-md;
+      border-color: variables.$primary-color;
     }
 
     .diamond-img {
@@ -535,7 +535,7 @@ ul {
 
     .diamond-id {
       font-size: 0.85rem;
-      color: $secondary-color;
+      color: variables.$secondary-color;
       margin-bottom: 0.5rem;
       font-family: monospace;
       background: #f1f5f9;
@@ -548,7 +548,7 @@ ul {
       font-size: 1.2rem;
       font-weight: 700;
       margin-bottom: 1rem;
-      color: $text-color;
+      color: variables.$text-color;
     }
 
     .specs-list {
@@ -563,12 +563,12 @@ ul {
 
         .label {
           font-size: 0.7rem;
-          color: $secondary-color;
+          color: variables.$secondary-color;
           text-transform: uppercase;
         }
         .value {
           font-weight: 600;
-          color: $text-color;
+          color: variables.$text-color;
         }
       }
     }
@@ -584,19 +584,19 @@ ul {
 }
 
 .login-card {
-  background: $white;
+  background: variables.$white;
   padding: 2rem;
   border-radius: 8px;
-  box-shadow: $shadow-md;
+  box-shadow: variables.$shadow-md;
   width: 100%;
   max-width: 400px;
   text-align: center;
   h2 {
     margin-bottom: 0.5rem;
-    color: $primary-color;
+    color: variables.$primary-color;
   }
   .text-muted {
-    color: $secondary-color;
+    color: variables.$secondary-color;
     margin-bottom: 1.5rem;
   }
 }
@@ -612,12 +612,12 @@ ul {
   input {
     width: 100%;
     padding: 0.6rem;
-    border: 1px solid $border-color;
+    border: 1px solid variables.$border-color;
     border-radius: 4px;
     font-size: 1rem;
     &:focus {
       outline: none;
-      border-color: $primary-color;
+      border-color: variables.$primary-color;
     }
   }
 }
@@ -639,11 +639,11 @@ ul {
 
     .page-title {
       font-size: 1.8rem;
-      color: $text-color;
+      color: variables.$text-color;
       margin-bottom: 0.2rem;
     }
     .page-subtitle {
-      color: $secondary-color;
+      color: variables.$secondary-color;
       font-size: 0.95rem;
     }
   }
@@ -656,10 +656,10 @@ ul {
 
   // Верхня панель (Filters Bar)
   .filters-bar {
-    background: $white;
+    background: variables.$white;
     padding: 1rem;
     border-radius: 8px; // Заокруглення за замовчуванням
-    border: 1px solid $border-color;
+    border: 1px solid variables.$border-color;
 
     // Важливо: прибираємо margin-bottom тут, бо він тепер у container
     margin-bottom: 0;
@@ -682,12 +682,12 @@ ul {
       input {
         width: 100%;
         padding: 0.6rem 0.6rem 0.6rem 2.2rem;
-        border: 1px solid $border-color;
+        border: 1px solid variables.$border-color;
         border-radius: 6px;
-        font-family: $font-main;
+        font-family: variables.$font-main;
         &:focus {
           outline: none;
-          border-color: $primary-color;
+          border-color: variables.$primary-color;
         }
       }
       .search-icon {
@@ -695,7 +695,7 @@ ul {
         left: 0.7rem;
         top: 50%;
         transform: translateY(-50%);
-        color: $secondary-color;
+        color: variables.$secondary-color;
         font-size: 0.9rem;
       }
     }
@@ -720,14 +720,14 @@ ul {
 
       .form-select {
         padding: 0.6rem;
-        border: 1px solid $border-color;
+        border: 1px solid variables.$border-color;
         border-radius: 6px;
-        background-color: $white;
-        color: $text-color;
+        background-color: variables.$white;
+        color: variables.$text-color;
         cursor: pointer;
         &:focus {
           outline: none;
-          border-color: $primary-color;
+          border-color: variables.$primary-color;
         }
       }
     }
@@ -750,7 +750,7 @@ ul {
   // --- Advanced Filters Panel (Винесено правильно!) ---
   .advanced-filters {
     background: #f8fafc;
-    border: 1px solid $border-color;
+    border: 1px solid variables.$border-color;
     border-top: none; // Пристиковуємо до верхньої панелі
     border-radius: 0 0 8px 8px;
     padding: 1.5rem;
@@ -789,7 +789,7 @@ ul {
         label {
           font-size: 0.85rem;
           font-weight: 600;
-          color: $secondary-color;
+          color: variables.$secondary-color;
         }
 
         .form-select,
@@ -809,7 +809,7 @@ ul {
             width: 50%;
           }
           span {
-            color: $secondary-color;
+            color: variables.$secondary-color;
           }
         }
       }
@@ -836,12 +836,12 @@ ul {
 
   // Table Styles
   .table-container {
-    background: $white;
+    background: variables.$white;
     border-radius: 8px;
-    border: 1px solid $border-color;
+    border: 1px solid variables.$border-color;
     overflow-x: auto; // Горизонтальний скрол, якщо таблиця ширша за контейнер
     -webkit-overflow-scrolling: touch; // Плавний скрол на iPhone
-    box-shadow: $shadow-sm;
+    box-shadow: variables.$shadow-sm;
   }
 
   .data-table {
@@ -853,14 +853,14 @@ ul {
     td {
       padding: 1rem;
       text-align: left;
-      border-bottom: 1px solid $border-color;
+      border-bottom: 1px solid variables.$border-color;
     }
 
     thead {
       background-color: #f8fafc;
       th {
         font-weight: 600;
-        color: $secondary-color;
+        color: variables.$secondary-color;
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -879,10 +879,10 @@ ul {
 
     .fw-bold {
       font-weight: 600;
-      color: $text-color;
+      color: variables.$text-color;
     }
     .text-muted {
-      color: $secondary-color;
+      color: variables.$secondary-color;
       font-size: 0.9rem;
     }
 
@@ -923,7 +923,7 @@ ul {
     // Стиль для клікабельного ID
     .id-link {
       font-weight: 600;
-      color: $primary-color;
+      color: variables.$primary-color;
       text-decoration: none;
       white-space: nowrap; // Заборонити перенос рядків
 
@@ -974,20 +974,20 @@ ul {
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid $border-color;
-      background: $white;
+      border: 1px solid variables.$border-color;
+      background: variables.$white;
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s;
 
       &:hover:not(.disabled) {
-        border-color: $primary-color;
-        color: $primary-color;
+        border-color: variables.$primary-color;
+        color: variables.$primary-color;
       }
       &.active {
-        background-color: $primary-color;
-        color: $white;
-        border-color: $primary-color;
+        background-color: variables.$primary-color;
+        color: variables.$white;
+        border-color: variables.$primary-color;
       }
       &.disabled {
         opacity: 0.5;
@@ -1019,11 +1019,11 @@ ul {
 
   // --- Ліва колонка (Форма) ---
   .form-column {
-    background: $white;
+    background: variables.$white;
     padding: 1.25rem;
     border-radius: 12px;
-    box-shadow: $shadow-sm;
-    border: 1px solid $border-color;
+    box-shadow: variables.$shadow-sm;
+    border: 1px solid variables.$border-color;
 
     // Дозволяє внутрішнім елементам (табам) скролитися, а не розпирати грід
     min-width: 0;
@@ -1037,7 +1037,7 @@ ul {
   // Tabs Navigation
   .stepper-tabs {
     display: flex;
-    border-bottom: 1px solid $border-color;
+    border-bottom: 1px solid variables.$border-color;
     margin-bottom: 2rem;
 
     // Скрол налаштування
@@ -1053,19 +1053,19 @@ ul {
       padding: 0.8rem 1rem; // Паддінги для мобайлу
       cursor: pointer;
       font-weight: 600;
-      color: $secondary-color;
+      color: variables.$secondary-color;
       border-bottom: 2px solid transparent;
       transition: all 0.2s;
       flex-shrink: 0;
       font-size: 0.9rem; // Менший шрифт для мобайлу
 
       &:hover {
-        color: $primary-color;
+        color: variables.$primary-color;
       }
 
       &.active {
-        color: $primary-color;
-        border-bottom-color: $primary-color;
+        color: variables.$primary-color;
+        border-bottom-color: variables.$primary-color;
         background-color: #f8fafc;
       }
 
@@ -1102,7 +1102,7 @@ ul {
     h3 {
       font-size: 1.2rem;
       margin: 1.5rem 0 1rem;
-      color: $text-color;
+      color: variables.$text-color;
       border-bottom: 1px solid #f1f5f9;
       padding-bottom: 0.5rem;
 
@@ -1150,24 +1150,24 @@ ul {
       font-size: 0.9rem;
       font-weight: 600;
       margin-bottom: 0.4rem;
-      color: $text-color;
+      color: variables.$text-color;
     }
     .form-control,
     .form-select {
       width: 100%;
       padding: 0.7rem;
-      border: 1px solid $border-color;
+      border: 1px solid variables.$border-color;
       border-radius: 6px;
-      font-family: $font-main;
+      font-family: variables.$font-main;
       font-size: 0.95rem;
 
       &:focus {
         outline: none;
-        border-color: $primary-color;
+        border-color: variables.$primary-color;
       }
       &.bg-light {
         background-color: #f8fafc;
-        color: $secondary-color;
+        color: variables.$secondary-color;
       }
     }
     textarea.form-control {
@@ -1178,7 +1178,7 @@ ul {
   .wizard-actions {
     display: flex;
     justify-content: space-between;
-    border-top: 1px solid $border-color;
+    border-top: 1px solid variables.$border-color;
     padding-top: 2rem;
     margin-top: 2rem;
   }
@@ -1192,7 +1192,7 @@ ul {
       background: #f8fafc;
       padding: 1.5rem;
       border-radius: 12px;
-      border: 1px solid $border-color;
+      border: 1px solid variables.$border-color;
 
       // На мобільному Sticky може заважати, якщо екран малий.
       // Можна залишити, а можна вимкнути для мобайлу:
@@ -1211,7 +1211,7 @@ ul {
       h4 {
         font-size: 0.85rem;
         text-transform: uppercase;
-        color: $secondary-color;
+        color: variables.$secondary-color;
         margin-top: 1.5rem;
         margin-bottom: 0.8rem;
         letter-spacing: 0.5px;
@@ -1219,7 +1219,7 @@ ul {
 
       hr {
         border: 0;
-        border-top: 1px solid $border-color;
+        border-top: 1px solid variables.$border-color;
         margin: 1rem 0;
       }
 
@@ -1231,7 +1231,7 @@ ul {
 
         label {
           font-size: 0.9rem;
-          color: $text-color;
+          color: variables.$text-color;
         }
         .calc-value {
           font-weight: 600;
@@ -1239,7 +1239,7 @@ ul {
           font-size: 1rem;
 
           &.placeholder {
-            color: $secondary-color;
+            color: variables.$secondary-color;
             opacity: 0.7;
           }
           &.price {
@@ -1267,7 +1267,7 @@ ul {
           transition: color 0.3s; // Анімація зміни кольору
 
           &.placeholder {
-            color: $secondary-color;
+            color: variables.$secondary-color;
             opacity: 0.7;
           }
 
@@ -1288,12 +1288,12 @@ ul {
 
 // --- Footer ---
 .main-footer {
-  background-color: $white;
-  border-top: 1px solid $border-color;
+  background-color: variables.$white;
+  border-top: 1px solid variables.$border-color;
   padding: 1.5rem 0;
   margin-top: auto;
   font-size: 0.9rem;
-  color: $secondary-color;
+  color: variables.$secondary-color;
 
   .footer-content {
     display: flex;
@@ -1310,15 +1310,15 @@ ul {
     gap: 0.8rem;
 
     a {
-      color: $secondary-color;
+      color: variables.$secondary-color;
       transition: color 0.2s;
       &:hover {
-        color: $primary-color;
+        color: variables.$primary-color;
       }
     }
 
     .separator {
-      color: $border-color;
+      color: variables.$border-color;
       font-size: 0.8rem;
     }
   }
@@ -1329,9 +1329,9 @@ ul {
 
     .footer-brand {
       font-weight: 600;
-      color: $text-color;
+      color: variables.$text-color;
       &:hover {
-        color: $primary-color;
+        color: variables.$primary-color;
       }
     }
   }
